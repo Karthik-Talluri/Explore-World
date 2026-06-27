@@ -1,0 +1,79 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      String    @default("USER") // "USER" or "ADMIN"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  reviews   Review[]
+}
+
+model Flight {
+  id             String   @id @default(uuid())
+  flightNumber   String   @unique
+  airline        String
+  departureCity  String
+  arrivalCity    String
+  departureTime  DateTime
+  arrivalTime    DateTime
+  price          Float
+  class          String   @default("Economy") // "Economy", "Business", "First"
+  availableSeats Int      @default(60)
+  stops          Int      @default(0)
+}
+
+model Hotel {
+  id            String   @id @default(uuid())
+  name          String
+  location      String
+  description   String
+  rating        Float
+  pricePerNight Float
+  images        String   // JSON string of image URLs
+  amenities     String   // Comma-separated list of amenities
+  latitude      Float
+  longitude     Float
+  reviews       Review[]
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String   // "FLIGHT", "HOTEL", "PACKAGE"
+  details       String   // JSON string containing flight/hotel/package specific details
+  totalPrice    Float
+  status        String   @default("CONFIRMED") // "PENDING", "CONFIRMED", "CANCELLED"
+  paymentStatus String   @default("PAID")      // "PENDING", "PAID", "FAILED"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Coupon {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  discountPercent Float
+  active          Boolean  @default(true)
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotelId   String
+  hotel     Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+}
