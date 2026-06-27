@@ -12,8 +12,8 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "Explore World | Premium Flight & Hotel Bookings",
-  description: "Your gateway to luxury hotel stays, discount flight bookings, and personalized AI itineraries worldwide.",
+  title: "Explore World | Premium Escorted Tour Packages",
+  description: "Your gateway to luxury escorted tour packages, domestic and international holiday travel itineraries worldwide.",
 };
 
 export default function RootLayout({

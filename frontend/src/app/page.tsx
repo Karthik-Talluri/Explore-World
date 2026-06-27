@@ -1,282 +1,196 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, Search, Palmtree, Sparkles, MapPin, Star, ShieldCheck, Landmark } from 'lucide-react';
+import { Compass, Sparkles, ShieldCheck, Landmark, CheckSquare, MessageSquare, PhoneCall, Globe, Map } from 'lucide-react';
 import AIAssistant from '@/components/AIAssistant';
 
 export default function Home() {
   const router = useRouter();
-  const [destinationQuery, setDestinationQuery] = useState('');
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (destinationQuery.trim()) {
-      router.push(`/packages?destination=${encodeURIComponent(destinationQuery.trim())}`);
-    } else {
-      router.push('/packages');
-    }
-  };
-
-  const handleSelectCategory = (cat: 'national' | 'international') => {
-    router.push(`/packages?category=${cat}`);
-  };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
       
-      {/* LUXURY HERO HEADER */}
-      <section className="relative flex min-h-[580px] items-center justify-center bg-slate-950 px-4 py-24 text-center overflow-hidden">
-        {/* Background Image / Overlay */}
-        <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80')] bg-cover bg-center opacity-30" />
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-primary/80 via-background to-background" />
+      {/* 1. FULL-SCREEN HERO SECTION */}
+      <section className="relative min-h-screen flex items-center justify-center px-4 overflow-hidden pt-20">
+        
+        {/* Background Luxury Travel Image */}
+        <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1600&auto=format&fit=crop&q=80')] bg-cover bg-center opacity-35" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-slate-950/90 via-slate-900/60 to-slate-950" />
+        
+        {/* Floating Abstract Glows */}
+        <div className="absolute top-1/4 left-10 w-96 h-96 rounded-full bg-blue-900/20 blur-3xl z-0" />
+        <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-secondary/15 blur-3xl z-0" />
 
-        {/* Floating circles */}
-        <div className="absolute top-1/4 left-1/4 h-72 w-72 rounded-full bg-secondary/10 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-blue-900/20 blur-3xl" />
-
-        {/* Hero Content */}
-        <div className="relative z-10 w-full max-w-4xl mx-auto space-y-10 animate-fade-in">
+        {/* Hero Content & Dual Cards */}
+        <div className="relative z-10 w-full max-w-6xl mx-auto text-center space-y-12 animate-fade-in my-10">
           
-          <div className="space-y-4">
-            <span className="inline-flex items-center space-x-1.5 rounded-full bg-secondary/15 border border-secondary/20 px-4 py-1 text-2xs font-bold text-secondary tracking-widest uppercase">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Bespoke Luxury Holiday Packages</span>
-            </span>
-            <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              Where would you like to{' '}
-              <span className="text-gold-gradient block sm:inline">
-                Travel?
+          {/* Headline & Subtitle */}
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center space-x-2 rounded-full bg-secondary/15 border border-secondary/35 px-4 py-1.5 text-3xs font-extrabold text-secondary tracking-widest uppercase shadow-[0_0_15px_rgba(197,160,89,0.15)]">
+              <Sparkles className="h-3.5 w-3.5 text-secondary animate-pulse" />
+              <span>Explore World Portfolios</span>
+            </div>
+            <h1 className="text-4xl sm:text-7xl font-black tracking-tight text-white leading-tight">
+              Discover Your{' '}
+              <span className="text-gold-gradient block sm:inline font-extrabold drop-shadow">
+                Next Adventure
               </span>
             </h1>
-            <p className="max-w-xl mx-auto text-xs sm:text-sm text-muted-foreground">
-              Discover customized tour packages across 26 Indian States and 32 global international countries. Fully escorted tours with private guides, premium transfers, and 5-star stays.
+            <p className="text-xs sm:text-base text-slate-300 font-medium">
+              Choose your travel destination and explore unforgettable tour packages.
             </p>
           </div>
 
-          {/* SEARCH BOX */}
-          <form onSubmit={handleSearchSubmit} className="glass rounded-2xl p-3 shadow-2xl w-full max-w-2xl mx-auto flex flex-col sm:flex-row items-center gap-3">
-            <div className="relative flex-grow w-full">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-muted-foreground">
-                <Search className="h-5 w-5 text-secondary" />
-              </span>
-              <input
-                type="text"
-                value={destinationQuery}
-                onChange={(e) => setDestinationQuery(e.target.value)}
-                placeholder="Search by destination (e.g. Kashmir, Maldives, Bali, Switzerland)..."
-                className="w-full rounded-xl border-0 bg-transparent pl-10 pr-3 py-3 text-sm text-foreground focus:outline-none focus:ring-0"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-secondary to-amber-600 px-8 py-3 text-xs font-bold text-slate-950 shadow-md hover:brightness-110 active:scale-98 transition-all"
+          {/* TWO LARGE INTERACTIVE SELECTION CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto pt-4">
+            
+            {/* CARD 1: National Tours */}
+            <div
+              onClick={() => router.push('/packages?category=national')}
+              className="group relative rounded-3xl border border-secondary/20 bg-slate-900/40 backdrop-blur-md overflow-hidden p-1 shadow-2xl hover:border-secondary/40 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
             >
-              Search Packages
-            </button>
-          </form>
+              <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&auto=format&fit=crop&q=80" // Taj Mahal
+                  alt="National Tours"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
+                <span className="absolute top-4 left-4 rounded-lg bg-black/60 px-3 py-1 text-3xs font-bold text-secondary uppercase tracking-widest">
+                  🇮🇳 National Tours
+                </span>
+              </div>
+              <div className="p-6 text-left space-y-4">
+                <h3 className="text-xl sm:text-2xl font-black text-white group-hover:text-secondary transition-colors">
+                  National Tours
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed min-h-12">
+                  Explore the beauty, culture, heritage, beaches, mountains, wildlife, and spiritual destinations across India.
+                </p>
+                <button className="w-full rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-3 text-xs font-black text-slate-950 uppercase tracking-wider shadow hover:brightness-110 active:scale-98 transition-all">
+                  Explore National Tours
+                </button>
+              </div>
+            </div>
+
+            {/* CARD 2: International Tours */}
+            <div
+              onClick={() => router.push('/packages?category=international')}
+              className="group relative rounded-3xl border border-secondary/20 bg-slate-900/40 backdrop-blur-md overflow-hidden p-1 shadow-2xl hover:border-secondary/40 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
+            >
+              <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800&auto=format&fit=crop&q=80" // World Travel Beach
+                  alt="International Tours"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
+                <span className="absolute top-4 left-4 rounded-lg bg-black/60 px-3 py-1 text-3xs font-bold text-secondary uppercase tracking-widest">
+                  🌍 International Tours
+                </span>
+              </div>
+              <div className="p-6 text-left space-y-4">
+                <h3 className="text-xl sm:text-2xl font-black text-white group-hover:text-secondary transition-colors">
+                  International Tours
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed min-h-12">
+                  Discover amazing international destinations, iconic landmarks, beaches, islands, mountains, and unforgettable travel experiences around the world.
+                </p>
+                <button className="w-full rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-3 text-xs font-black text-slate-950 uppercase tracking-wider shadow hover:brightness-110 active:scale-98 transition-all">
+                  Explore International Tours
+                </button>
+              </div>
+            </div>
+
+          </div>
 
         </div>
       </section>
 
-      {/* TWO LARGE INTERACTIVE SELECTION CARDS */}
-      <section className="mx-auto max-w-7xl w-full px-4 py-12 sm:px-6 lg:px-8 space-y-6">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Curated Portfolios</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground">Select your region to explore hand-picked holiday package itineraries.</p>
+      {/* 2. WHY CHOOSE EXPLORE WORLD SECTION */}
+      <section className="mx-auto max-w-7xl w-full px-4 py-20 sm:px-6 lg:px-8 space-y-12">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <span className="text-xs font-bold text-secondary uppercase tracking-widest">Our Promise</span>
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">Why Choose Explore World?</h2>
+          <p className="text-xs sm:text-sm text-slate-400">Experience world-class luxury and tailored escorted tours.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           
-          {/* CARD 1: National (India) */}
-          <div
-            onClick={() => handleSelectCategory('national')}
-            className="group relative h-96 rounded-3xl overflow-hidden shadow-2xl border border-secondary/20 cursor-pointer hover:scale-101 hover:border-secondary transition-all duration-300"
-          >
-            <img
-              src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=800&auto=format&fit=crop&q=80" // Taj Mahal/India
-              alt="Explore India"
-              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-            
-            {/* Content overlay */}
-            <div className="absolute bottom-8 left-8 right-8 space-y-3">
-              <span className="rounded bg-secondary px-3 py-1 text-3xs font-bold text-slate-950 uppercase tracking-widest">
-                🇮🇳 National
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-white">Explore India</h3>
-              <p className="text-xs text-slate-300 max-w-sm">
-                From snow-capped Himalayan retreats in Kashmir and Ladakh to golden desert palaces in Rajasthan and tropical backwaters in Kerala.
-              </p>
-              <div className="flex items-center space-x-1 text-xs font-bold text-secondary pt-1 group-hover:translate-x-1.5 transition-transform">
-                <span>View 26 States Packages</span>
-                <span>➔</span>
-              </div>
+          {/* 1. Best Tour Packages */}
+          <div className="rounded-2xl border border-border bg-slate-900/30 p-5 shadow-sm space-y-3 hover:border-secondary/30 transition-colors">
+            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary shrink-0">
+              <Map className="h-5 w-5" />
             </div>
+            <h4 className="text-sm font-bold text-white">Best Tour Packages</h4>
+            <p className="text-3xs text-slate-400 leading-relaxed">
+              Curated itineraries with 5-star cottages and experienced local escorts.
+            </p>
           </div>
 
-          {/* CARD 2: International */}
-          <div
-            onClick={() => handleSelectCategory('international')}
-            className="group relative h-96 rounded-3xl overflow-hidden shadow-2xl border border-secondary/20 cursor-pointer hover:scale-101 hover:border-secondary transition-all duration-300"
-          >
-            <img
-              src="https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=800&auto=format&fit=crop&q=80" // Sydney Opera / Global
-              alt="Explore International"
-              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-            
-            {/* Content overlay */}
-            <div className="absolute bottom-8 left-8 right-8 space-y-3">
-              <span className="rounded bg-secondary px-3 py-1 text-3xs font-bold text-slate-950 uppercase tracking-widest">
-                🌍 International
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-white">Explore International</h3>
-              <p className="text-xs text-slate-300 max-w-sm">
-                Discover skyline luxury in Dubai, private overwater pool villas in Maldives, scenic Swiss Alps routes, or ancient temples in Japan.
-              </p>
-              <div className="flex items-center space-x-1 text-xs font-bold text-secondary pt-1 group-hover:translate-x-1.5 transition-transform">
-                <span>View 32 Countries Packages</span>
-                <span>➔</span>
-              </div>
+          {/* 2. Verified Destinations */}
+          <div className="rounded-2xl border border-border bg-slate-900/30 p-5 shadow-sm space-y-3 hover:border-secondary/30 transition-colors">
+            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary shrink-0">
+              <Globe className="h-5 w-5" />
             </div>
+            <h4 className="text-sm font-bold text-white">Verified Destinations</h4>
+            <p className="text-3xs text-slate-400 leading-relaxed">
+              We inspect every resort, transfer path, and entry route prior to reservations.
+            </p>
+          </div>
+
+          {/* 3. Affordable Prices */}
+          <div className="rounded-2xl border border-border bg-slate-900/30 p-5 shadow-sm space-y-3 hover:border-secondary/30 transition-colors">
+            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary shrink-0">
+              <Landmark className="h-5 w-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white">Affordable Prices</h4>
+            <p className="text-3xs text-slate-400 leading-relaxed">
+              Enjoy premium tours at transparent competitive prices with zero hidden markups.
+            </p>
+          </div>
+
+          {/* 4. 24/7 Customer Support */}
+          <div className="rounded-2xl border border-border bg-slate-900/30 p-5 shadow-sm space-y-3 hover:border-secondary/30 transition-colors">
+            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary shrink-0">
+              <PhoneCall className="h-5 w-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white">24/7 Support</h4>
+            <p className="text-3xs text-slate-400 leading-relaxed">
+              A dedicated team of customer coordinators is online around-the-clock.
+            </p>
+          </div>
+
+          {/* 5. Secure Online Booking */}
+          <div className="rounded-2xl border border-border bg-slate-900/30 p-5 shadow-sm space-y-3 hover:border-secondary/30 transition-colors">
+            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary shrink-0">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <h4 className="text-sm font-bold text-white">Secure Online Booking</h4>
+            <p className="text-3xs text-slate-400 leading-relaxed">
+              Safe transaction checkout backed by encrypted tokenized payment gateways.
+            </p>
           </div>
 
         </div>
       </section>
 
-      {/* FEATURED / BEST SEASON PACKAGE SELECTION */}
-      <section className="bg-muted/40 py-16 transition-colors duration-300">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-10 space-y-3 sm:space-y-0">
-            <div>
-              <span className="text-xs font-bold text-secondary uppercase tracking-widest block">Signature Tours</span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Best Season Holiday Packages</h2>
-            </div>
-            <button
-              onClick={() => router.push('/packages')}
-              className="text-xs font-bold text-secondary hover:underline"
-            >
-              Browse All Packages ➔
-            </button>
-          </div>
-
-          {/* Grid list of featured packages */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            
-            {/* Featured 1 */}
-            <div
-              onClick={() => router.push('/packages')}
-              className="group rounded-2xl border border-border bg-card overflow-hidden shadow-md cursor-pointer hover:border-secondary/30 transition-colors"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1566837945700-30057527ade0?w=600"
-                alt="Kashmir"
-                className="h-48 w-full object-cover group-hover:scale-102 transition-transform duration-500"
-              />
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between items-center text-3xs font-semibold text-muted-foreground uppercase">
-                  <span>6 Days • National</span>
-                  <span className="text-secondary">Best: Mar-Oct</span>
-                </div>
-                <h4 className="text-sm font-bold text-foreground group-hover:text-secondary transition-colors">
-                  Kashmir Paradise Valley Tour
-                </h4>
-                <div className="flex justify-between items-center border-t border-border/20 pt-3">
-                  <span className="text-xs font-extrabold text-foreground">$499 <span className="text-4xs text-muted-foreground font-normal">/ traveler</span></span>
-                  <span className="text-3xs font-bold text-secondary">View Details</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Featured 2 */}
-            <div
-              onClick={() => router.push('/packages')}
-              className="group rounded-2xl border border-border bg-card overflow-hidden shadow-md cursor-pointer hover:border-secondary/30 transition-colors"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=600"
-                alt="Maldives"
-                className="h-48 w-full object-cover group-hover:scale-102 transition-transform duration-500"
-              />
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between items-center text-3xs font-semibold text-muted-foreground uppercase">
-                  <span>5 Days • International</span>
-                  <span className="text-secondary">Best: Nov-Apr</span>
-                </div>
-                <h4 className="text-sm font-bold text-foreground group-hover:text-secondary transition-colors">
-                  Maldives Overwater Pool Villa Getaway
-                </h4>
-                <div className="flex justify-between items-center border-t border-border/20 pt-3">
-                  <span className="text-xs font-extrabold text-foreground">$1899 <span className="text-4xs text-muted-foreground font-normal">/ traveler</span></span>
-                  <span className="text-3xs font-bold text-secondary">View Details</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Featured 3 */}
-            <div
-              onClick={() => router.push('/packages')}
-              className="group rounded-2xl border border-border bg-card overflow-hidden shadow-md cursor-pointer hover:border-secondary/30 transition-colors"
-            >
-              <img
-                src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600"
-                alt="Dubai"
-                className="h-48 w-full object-cover group-hover:scale-102 transition-transform duration-500"
-              />
-              <div className="p-5 space-y-3">
-                <div className="flex justify-between items-center text-3xs font-semibold text-muted-foreground uppercase">
-                  <span>5 Days • International</span>
-                  <span className="text-secondary">Best: Nov-Apr</span>
-                </div>
-                <h4 className="text-sm font-bold text-foreground group-hover:text-secondary transition-colors">
-                  Dubai Luxury Skyline Escape
-                </h4>
-                <div className="flex justify-between items-center border-t border-border/20 pt-3">
-                  <span className="text-xs font-extrabold text-foreground">$1399 <span className="text-4xs text-muted-foreground font-normal">/ traveler</span></span>
-                  <span className="text-3xs font-bold text-secondary">View Details</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
+      {/* 3. ABOUT US SECTION ANCHOR */}
+      <section id="about-us" className="mx-auto max-w-5xl w-full px-4 py-16 border-t border-border/20 space-y-4 text-center">
+        <h3 className="text-xl sm:text-2xl font-extrabold text-white">About Explore World</h3>
+        <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-3xl mx-auto">
+          Explore World is a premier luxury travel agency specializing exclusively in domestic and international holiday tour packages. We design private, fully-escorted travel itineraries tailored to your unique desires, from romantic beach getaways in the Maldives to culturally rich heritage trails in Rajasthan. We prioritize safety, authentic local experiences, and 5-star lodgings on every single booking.
+        </p>
       </section>
 
-      {/* LUXURY TRUST & VALUES */}
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground">Escorted Group Safety</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Every tour package includes licensed professional local guides and dedicated luxury vehicles with round-the-clock emergency assistance.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary">
-              <Landmark className="h-6 w-6" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground">Verified Luxury Lodgings</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              We partner strictly with 4-star and 5-star properties, guaranteeing room upgrades, buffet breakfasts, and complimentary spa benefits.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-3">
-            <div className="inline-block rounded-xl bg-secondary/15 p-3 text-secondary">
-              <Palmtree className="h-6 w-6" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground">Tailored Special Requests</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Customize your packages with private candlelight dinners, anniversary cakes, vegetarian catering, and wheelchair-accessible transport.
-            </p>
-          </div>
+      {/* 4. CONTACT US SECTION ANCHOR */}
+      <section id="contact-us" className="mx-auto max-w-md w-full px-4 py-16 border-t border-border/20 space-y-4 text-center">
+        <h3 className="text-xl sm:text-2xl font-extrabold text-white">Contact Our Planners</h3>
+        <p className="text-xs text-slate-400">Have questions about visa guides or custom tours? Get in touch!</p>
+        <div className="space-y-2 text-xs">
+          <p>📞 Phone support: <strong>+1 (800) 555-Tours</strong></p>
+          <p>✉️ Email inbox: <strong>concierge@exploreworld.com</strong></p>
+          <p>📍 Office: <strong>Explore World Elite HQ, Mumbai & San Francisco</strong></p>
         </div>
       </section>
 
