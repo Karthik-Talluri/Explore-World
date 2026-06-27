@@ -2,17 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Compass, ShieldAlert, Calendar, Ticket, Compass as CompassIcon, Sparkles, Heart, PlaneTakeoff, Info } from 'lucide-react';
+import { Compass, ShieldAlert, Ticket, Calendar, Heart, Info, ArrowDownToLine, Receipt, FileText } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 
 interface Booking {
   id: string;
-  type: 'FLIGHT' | 'HOTEL' | 'PACKAGE';
-  details: any;
+  travelDate: string;
+  travelersCount: number;
+  roomType: string;
+  specialRequests: string;
   totalPrice: number;
-  status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
+  status: 'CONFIRMED' | 'CANCELLED';
   paymentStatus: string;
+  invoiceId: string;
   createdAt: string;
+  package: { name: string; destination: string; price: number };
 }
 
 export default function DashboardPage() {
@@ -22,6 +26,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  // Invoice display state
+  const [selectedInvoice, setSelectedInvoice] = useState<Booking | null>(null);
 
   const fetchBookings = async () => {
     if (!token) return;
@@ -50,7 +57,7 @@ export default function DashboardPage() {
   }, [token]);
 
   const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    if (!confirm('Are you sure you want to cancel this tour booking reservation? Refund operations take 2-3 business days.')) return;
     try {
       const res = await fetch(`${apiUrl}/api/bookings/cancel/${bookingId}`, {
         method: 'POST',
@@ -65,7 +72,7 @@ export default function DashboardPage() {
       setBookings(prev =>
         prev.map(b => (b.id === bookingId ? { ...b, status: 'CANCELLED' } : b))
       );
-      alert('Booking cancelled successfully. Refund processed.');
+      alert('Booking cancelled successfully.');
     } catch (err: any) {
       alert(err.message);
     }
@@ -74,15 +81,15 @@ export default function DashboardPage() {
   if (!token) {
     return (
       <div className="mx-auto max-w-md w-full px-4 py-32 text-center space-y-6">
-        <div className="rounded-2xl border border-dashed border-border/80 p-8 bg-card shadow-sm space-y-4">
-          <ShieldAlert className="h-12 w-12 text-primary mx-auto animate-pulse" />
+        <div className="rounded-2xl border border-dashed border-secondary/30 p-8 bg-card shadow-sm space-y-4">
+          <ShieldAlert className="h-12 w-12 text-secondary mx-auto animate-pulse" />
           <h2 className="text-xl font-bold text-foreground">Authentication Required</h2>
           <p className="text-xs text-muted-foreground">
-            Please sign in to view your bookings history, wishlist, and active travel itineraries.
+            Please sign in to view your bookings history, wishlist, and active tour itineraries.
           </p>
           <button
             onClick={() => setIsAuthOpen(true)}
-            className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110 shadow-md transition-all"
+            className="w-full rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-2.5 text-sm font-bold text-slate-950 shadow transition-all"
           >
             Sign In Now
           </button>
@@ -92,93 +99,31 @@ export default function DashboardPage() {
     );
   }
 
-  // Find nearest confirmed flight booking for live tracker
-  const activeFlightBooking = bookings.find(
-    (b) => b.type === 'FLIGHT' && b.status === 'CONFIRMED'
-  );
-
   return (
     <div className="mx-auto max-w-7xl w-full px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
       
-      {/* Welcome Header banner */}
-      <div className="rounded-3xl bg-slate-900 border border-white/5 relative p-6 sm:p-8 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
-        <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800')] bg-cover bg-center opacity-10" />
+      {/* Welcome Header */}
+      <div className="rounded-3xl bg-slate-950 border border-secondary/20 relative p-6 sm:p-8 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
+        <div className="absolute inset-0 z-0 bg-[url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800')] bg-cover bg-center opacity-10" />
         <div className="relative z-10 space-y-1">
-          <span className="text-xs font-bold text-primary uppercase tracking-widest block">Dashboard</span>
+          <span className="text-xs font-bold text-secondary uppercase tracking-widest block">Dashboard</span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Welcome back, {user?.name}!</h1>
-          <p className="text-xs text-slate-400">{user?.email} • Premium Explorer Account</p>
+          <p className="text-xs text-slate-400">{user?.email} • Premium Tour Member</p>
         </div>
-        <div className="relative z-10 flex items-center space-x-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-slate-300">
-          <Compass className="h-4 w-4 text-secondary animate-spin-slow" />
-          <span>Active Explorer Status</span>
+        <div className="relative z-10 flex items-center space-x-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-secondary">
+          <Compass className="h-4 w-4 animate-spin-slow" />
+          <span>Active Escorted Travel Status</span>
         </div>
       </div>
 
-      {/* Live Booking Status Tracker */}
-      {activeFlightBooking && (
-        <div className="rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex items-center space-x-2 border-b border-border/20 pb-3">
-            <PlaneTakeoff className="h-5 w-5 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">Live Booking Flight Status</h3>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-            <div>
-              <span className="text-3xs text-muted-foreground uppercase block font-bold">Flight</span>
-              <span className="font-semibold text-foreground">
-                {activeFlightBooking.details.airline} ({activeFlightBooking.details.flightNumber})
-              </span>
-            </div>
-            <div>
-              <span className="text-3xs text-muted-foreground uppercase block font-bold">Route</span>
-              <span className="font-semibold text-foreground">
-                {activeFlightBooking.details.departureCity} ➔ {activeFlightBooking.details.arrivalCity}
-              </span>
-            </div>
-            <div>
-              <span className="text-3xs text-muted-foreground uppercase block font-bold">Ref</span>
-              <span className="font-semibold text-foreground font-mono">{activeFlightBooking.id.substring(0, 8)}</span>
-            </div>
-          </div>
-
-          {/* Live Progress Bar Tracker */}
-          <div className="relative pt-6">
-            <div className="absolute inset-x-0 top-7 h-1 bg-muted rounded" />
-            <div className="absolute left-0 top-7 h-1 bg-primary rounded w-1/2" />
-            
-            <div className="relative flex justify-between">
-              {[
-                { label: 'Booking Paid', active: true },
-                { label: 'Ticket Issued', active: true },
-                { label: 'Departed', active: false },
-                { label: 'Arrived', active: false },
-              ].map((step, idx) => (
-                <div key={idx} className="flex flex-col items-center space-y-1">
-                  <div
-                    className={`h-3 w-3 rounded-full border-2 ${
-                      step.active
-                        ? 'border-primary bg-primary'
-                        : 'border-muted bg-card'
-                    }`}
-                  />
-                  <span className="text-4xs font-bold text-muted-foreground uppercase tracking-wide">
-                    {step.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Sections Grid */}
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Bookings History List */}
+        {/* Bookings History */}
         <div className="lg:col-span-2 space-y-4">
           <h2 className="text-lg font-bold text-foreground flex items-center space-x-1.5">
-            <Ticket className="h-5 w-5 text-primary" />
-            <span>My Bookings History</span>
+            <Ticket className="h-5 w-5 text-secondary" />
+            <span>My Bookings & Invoices</span>
           </h2>
 
           {loading ? (
@@ -191,95 +136,66 @@ export default function DashboardPage() {
             </div>
           ) : bookings.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/80 p-8 text-center bg-card">
-              <CompassIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <Compass className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
               <h4 className="font-bold text-foreground">No bookings found</h4>
-              <p className="text-xs text-muted-foreground">You haven't purchased any tickets or hotels yet.</p>
+              <p className="text-xs text-muted-foreground">You haven't reserved any holiday packages yet.</p>
             </div>
           ) : (
             bookings.map((booking) => (
               <div
                 key={booking.id}
-                className="rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col justify-between gap-4 hover:border-primary/20 transition-colors"
+                className="rounded-2xl border border-border bg-card p-5 shadow-sm flex flex-col justify-between gap-4 hover:border-secondary/20 transition-colors"
               >
                 <div className="flex items-center justify-between border-b border-border/20 pb-3">
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold text-foreground uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-0.5 rounded">
-                      {booking.type}
+                    <span className="text-3xs font-bold text-slate-950 bg-secondary px-2.5 py-0.5 rounded">
+                      {booking.package.destination.toUpperCase()}
                     </span>
-                    <span className="text-3xs font-mono text-muted-foreground">ID: {booking.id}</span>
+                    <span className="text-3xs font-mono text-muted-foreground">Invoice: {booking.invoiceId}</span>
                   </div>
                   <span
                     className={`rounded px-2.5 py-0.5 text-3xs font-semibold uppercase ${
                       booking.status === 'CONFIRMED'
                         ? 'bg-emerald-500/10 text-emerald-500'
-                        : booking.status === 'CANCELLED'
-                          ? 'bg-destructive/10 text-destructive'
-                          : 'bg-amber-500/10 text-amber-500'
+                        : 'bg-destructive/10 text-destructive'
                     }`}
                   >
                     {booking.status}
                   </span>
                 </div>
 
-                {/* Details Render based on Type */}
-                <div className="text-xs space-y-2">
-                  {booking.type === 'FLIGHT' && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-foreground">
-                          Flight {booking.details.flightNumber} ({booking.details.airline})
-                        </p>
-                        <p className="text-muted-foreground">
-                          Route: {booking.details.departureCity} ➔ {booking.details.arrivalCity}
-                        </p>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-muted-foreground">Class: {booking.details.class}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {booking.type === 'HOTEL' && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-foreground">{booking.details.name}</p>
-                        <p className="text-muted-foreground">Location: {booking.details.location}</p>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-muted-foreground">Amenities: Wifi, Pool</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {booking.type === 'PACKAGE' && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <p className="font-semibold text-foreground">{booking.details.title}</p>
-                        <p className="text-muted-foreground">Highlights: {booking.details.highlights}</p>
-                      </div>
-                      <div className="text-left sm:text-right">
-                        <p className="text-muted-foreground">{booking.details.duration}</p>
-                      </div>
-                    </div>
-                  )}
+                {/* Details */}
+                <div className="text-xs grid grid-cols-1 sm:grid-cols-2 gap-2 text-muted-foreground">
+                  <div>
+                    <p className="font-bold text-foreground text-sm">{booking.package.name}</p>
+                    <p className="flex items-center space-x-1 mt-1">
+                      <Calendar className="h-3.5 w-3.5 text-secondary" />
+                      <span>Date: {new Date(booking.travelDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p>Travelers: <strong>{booking.travelersCount} Adults</strong></p>
+                    <p>Lodging: <strong>{booking.roomType} Room</strong></p>
+                  </div>
                 </div>
 
-                {/* Price & Cancellation Actions */}
+                {/* Pricing & Invoices */}
                 <div className="border-t border-border/20 pt-3 flex items-center justify-between">
-                  <div>
-                    <span className="text-4xs text-muted-foreground uppercase block font-bold">Booking Date</span>
-                    <span className="text-2xs text-muted-foreground">
-                      {new Date(booking.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <span className="text-sm font-extrabold text-foreground">${booking.totalPrice}</span>
+                  <span className="text-sm font-extrabold text-foreground">${booking.totalPrice}</span>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setSelectedInvoice(booking)}
+                      className="rounded-lg border border-border hover:bg-accent px-3 py-1.5 text-2xs font-semibold text-foreground flex items-center space-x-1"
+                    >
+                      <Receipt className="h-3.5 w-3.5 text-secondary" />
+                      <span>Invoice Summary</span>
+                    </button>
                     {booking.status === 'CONFIRMED' && (
                       <button
                         onClick={() => handleCancelBooking(booking.id)}
                         className="rounded-lg border border-destructive/20 hover:bg-destructive/10 px-3 py-1.5 text-2xs font-semibold text-destructive transition-all"
                       >
-                        Cancel Booking
+                        Cancel Reservation
                       </button>
                     )}
                   </div>
@@ -294,22 +210,20 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-foreground flex items-center space-x-1.5">
             <Heart className="h-5 w-5 text-rose-500 fill-rose-500/20" />
-            <span>My Travel Wishlist</span>
+            <span>My Wishlist Destinations</span>
           </h2>
           
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
             {[
               {
-                name: 'Grand Royal Palace',
-                location: 'Paris, France',
-                price: '$280/night',
-                image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200',
+                name: 'Kashmir Paradise Valley Tour',
+                price: '$499/person',
+                image: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?w=200',
               },
               {
-                name: 'Serenity Boutique Resort',
-                location: 'Tokyo, Japan',
-                price: '$190/night',
-                image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=200',
+                name: 'Maldives Overwater Pool Villa Getaway',
+                price: '$1899/person',
+                image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=200',
               },
             ].map((wish, idx) => (
               <div key={idx} className="flex items-center space-x-3 pb-3 border-b border-border/20 last:pb-0 last:border-b-0">
@@ -320,32 +234,110 @@ export default function DashboardPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-foreground block truncate">{wish.name}</span>
-                  <span className="text-3xs text-muted-foreground block">{wish.location}</span>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xs font-semibold text-foreground block">{wish.price}</span>
-                  <span className="text-3xs text-primary font-semibold hover:underline cursor-pointer">
-                    Book
-                  </span>
+                <div className="text-right shrink-0">
+                  <span className="text-2xs font-bold text-foreground block">{wish.price}</span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Quick Guide/Info Panel */}
-          <div className="rounded-2xl bg-primary/5 border border-primary/20 p-5 space-y-2">
-            <h4 className="text-xs font-bold text-primary flex items-center space-x-1">
+          <div className="rounded-2xl bg-primary/10 border border-secondary/20 p-5 space-y-2 text-xs">
+            <h4 className="font-bold text-secondary flex items-center space-x-1">
               <Info className="h-4 w-4" />
-              <span>Travel Protection Policy</span>
+              <span>Baggage Policy Info</span>
             </h4>
             <p className="text-2xs text-muted-foreground leading-relaxed">
-              Standard cancellations are fully refundable within 24 hours of checkout. Cancellations afterwards may incur a 10% processing fee.
+              Escorted vehicle transfers accommodate 1 medium bag (23kg) per traveler. Excess luggage requests must be submitted to planners.
             </p>
           </div>
         </div>
 
       </div>
 
+      {/* DETAILED INVOICE MODAL SIMULATOR */}
+      {selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-card border border-border p-6 shadow-2xl animate-fade-in space-y-6">
+            <button
+              onClick={() => setSelectedInvoice(null)}
+              className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-accent"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="text-center border-b border-border/20 pb-4">
+              <FileText className="h-10 w-10 text-secondary mx-auto mb-1" />
+              <h3 className="text-lg font-black text-foreground">Explore World Billed Invoice</h3>
+              <p className="text-3xs text-muted-foreground uppercase font-semibold">Reference ID: {selectedInvoice.invoiceId}</p>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tour Package</span>
+                <span className="font-semibold text-foreground text-right">{selectedInvoice.package.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Travel Date</span>
+                <span className="font-semibold text-foreground">{new Date(selectedInvoice.travelDate).toLocaleDateString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Travelers</span>
+                <span className="font-semibold text-foreground">{selectedInvoice.travelersCount} Adults</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Lodgings Plan</span>
+                <span className="font-semibold text-foreground">{selectedInvoice.roomType} Room</span>
+              </div>
+              <div className="border-t border-dashed border-border/80 my-3" />
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Base Billed Item</span>
+                <span className="font-semibold text-foreground">${selectedInvoice.package.price} / person</span>
+              </div>
+              <div className="flex justify-between font-bold text-sm">
+                <span className="text-foreground">Total Price Charged</span>
+                <span className="text-secondary">${selectedInvoice.totalPrice}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                alert('Invoice downloaded successfully as PDF!');
+                setSelectedInvoice(null);
+              }}
+              className="w-full rounded-xl bg-secondary py-2.5 text-xs font-bold text-slate-950 flex items-center justify-center space-x-1 hover:brightness-110"
+            >
+              <ArrowDownToLine className="h-4 w-4" />
+              <span>Download Billed PDF</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Modal Trigger in case session logs out */}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </div>
+  );
+}
+
+// X icon for closing modal
+function X({ className, ...props }: any) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
   );
 }

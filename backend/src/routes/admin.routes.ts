@@ -8,52 +8,46 @@ const router = Router();
 router.use(authenticateJWT);
 router.use(requireAdmin);
 
-// Get Platform Statistics
+// Get Admin stats dashboard summary
 router.get('/stats', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const totalBookings = await prisma.booking.count();
     const totalUsers = await prisma.user.count({ where: { role: 'USER' } });
+    const totalPackages = await prisma.tourPackage.count();
     
-    // Calculate total revenue
+    // Revenue
     const paidBookings = await prisma.booking.findMany({
       where: { paymentStatus: 'PAID' },
       select: { totalPrice: true },
     });
     const totalRevenue = paidBookings.reduce((sum, b) => sum + b.totalPrice, 0);
 
-    // Bookings breakdown by type
-    const flightsCount = await prisma.booking.count({ where: { type: 'FLIGHT' } });
-    const hotelsCount = await prisma.booking.count({ where: { type: 'HOTEL' } });
-    const packagesCount = await prisma.booking.count({ where: { type: 'PACKAGE' } });
+    // Breakdown
+    const nationalCount = await prisma.tourPackage.count({ where: { category: 'NATIONAL' } });
+    const internationalCount = await prisma.tourPackage.count({ where: { category: 'INTERNATIONAL' } });
 
-    // Recent bookings (last 5)
-    const recentBookings = await prisma.booking.findMany({
-      take: 5,
+    // Recent Bookings
+    const recent = await prisma.booking.findMany({
+      take: 6,
       orderBy: { createdAt: 'desc' },
       include: {
-        user: {
-          select: { name: true, email: true },
-        },
-      },
+        user: { select: { name: true, email: true } },
+        package: { select: { name: true } }
+      }
     });
-
-    const parsedRecentBookings = recentBookings.map(b => ({
-      ...b,
-      details: JSON.parse(b.details),
-    }));
 
     return res.json({
       summary: {
         totalBookings,
         totalUsers,
+        totalPackages,
         totalRevenue: Number(totalRevenue.toFixed(2)),
         breakdown: {
-          flights: flightsCount,
-          hotels: hotelsCount,
-          packages: packagesCount,
-        },
+          national: nationalCount,
+          international: internationalCount,
+        }
       },
-      recentBookings: parsedRecentBookings,
+      recentBookings: recent,
     });
   } catch (error) {
     console.error('Admin stats error:', error);
@@ -61,132 +55,161 @@ router.get('/stats', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// Get All Bookings
+// List all bookings
 router.get('/bookings', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const bookings = await prisma.booking.findMany({
-      orderBy: { createdAt: 'desc' },
       include: {
-        user: {
-          select: { name: true, email: true },
-        },
+        user: { select: { name: true, email: true } },
+        package: true,
       },
+      orderBy: { createdAt: 'desc' },
     });
 
-    const formattedBookings = bookings.map(b => ({
+    const formatted = bookings.map(b => ({
       ...b,
-      details: JSON.parse(b.details),
+      package: {
+        ...b.package,
+        images: JSON.parse(b.package.images),
+        itinerary: JSON.parse(b.package.itinerary),
+      }
     }));
 
-    return res.json(formattedBookings);
+    return res.json(formatted);
   } catch (error) {
-    console.error('Admin fetch bookings error:', error);
+    console.error('Admin list bookings error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Get All Users
+// List all users
 router.get('/users', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
-
     return res.json(users);
   } catch (error) {
-    console.error('Admin fetch users error:', error);
+    console.error('Admin list users error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Add a Hotel
-router.post('/hotels', async (req: AuthenticatedRequest, res: Response) => {
+// Add a tour package
+router.post('/packages', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { name, location, description, rating, pricePerNight, images, amenities, latitude, longitude } = req.body;
+    const {
+      name, category, destination, price, durationDays, bestSeason, attractions,
+      hotelDetails, mealPlan, transportation, itinerary, visaRequirement, currency,
+      weather, inclusions, exclusions, images, type
+    } = req.body;
 
-    if (!name || !location || !pricePerNight) {
-      return res.status(400).json({ message: 'Name, location, and pricePerNight are required' });
+    if (!name || !category || !destination || !price || !durationDays) {
+      return res.status(400).json({ message: 'Name, category, destination, price, and duration are required' });
     }
 
-    const hotel = await prisma.hotel.create({
+    const pkg = await prisma.tourPackage.create({
       data: {
         name,
-        location,
-        description: description || '',
-        rating: Number(rating) || 4.0,
-        pricePerNight: Number(pricePerNight),
-        images: JSON.stringify(images || []),
-        amenities: amenities || '',
-        latitude: Number(latitude) || 0.0,
-        longitude: Number(longitude) || 0.0,
-      },
-    });
-
-    return res.status(201).json(hotel);
-  } catch (error) {
-    console.error('Admin create hotel error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Add a Flight
-router.post('/flights', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { flightNumber, airline, departureCity, arrivalCity, departureTime, arrivalTime, price, seatClass, availableSeats, stops } = req.body;
-
-    if (!flightNumber || !airline || !departureCity || !arrivalCity || !price) {
-      return res.status(400).json({ message: 'Flight number, airline, departure/arrival cities, and price are required' });
-    }
-
-    const flight = await prisma.flight.create({
-      data: {
-        flightNumber,
-        airline,
-        departureCity: departureCity.toUpperCase(),
-        arrivalCity: arrivalCity.toUpperCase(),
-        departureTime: new Date(departureTime),
-        arrivalTime: new Date(arrivalTime),
+        category: category.toUpperCase(),
+        destination,
         price: Number(price),
-        class: seatClass || 'Economy',
-        availableSeats: Number(availableSeats) || 60,
-        stops: Number(stops) || 0,
+        durationDays: Number(durationDays),
+        bestSeason: bestSeason || 'Year-round',
+        attractions: attractions || '',
+        hotelDetails: hotelDetails || 'Premium stay',
+        mealPlan: mealPlan || 'All meals included',
+        transportation: transportation || 'Luxury transfers',
+        itinerary: JSON.stringify(itinerary || []),
+        visaRequirement: visaRequirement || 'Not Required',
+        currency: currency || 'INR',
+        weather: weather || 'Pleasant',
+        inclusions: inclusions || '',
+        exclusions: exclusions || '',
+        images: JSON.stringify(images || []),
+        availableDates: JSON.stringify(['2026-07-15', '2026-08-10', '2026-09-05']),
+        type: type || 'Luxury',
+        active: true,
       },
     });
 
-    return res.status(201).json(flight);
+    return res.status(201).json(pkg);
   } catch (error) {
-    console.error('Admin create flight error:', error);
+    console.error('Admin add package error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Add Coupon
-router.post('/coupons', async (req: AuthenticatedRequest, res: Response) => {
+// Toggle package status (enable/disable)
+router.put('/packages/:id/toggle', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { code, discountPercent, active } = req.body;
+    const pkg = await prisma.tourPackage.findUnique({ where: { id: req.params.id } });
+    if (!pkg) return res.status(404).json({ message: 'Package not found' });
 
-    if (!code || !discountPercent) {
-      return res.status(400).json({ message: 'Code and discountPercent are required' });
-    }
-
-    const coupon = await prisma.coupon.create({
-      data: {
-        code: code.toUpperCase(),
-        discountPercent: Number(discountPercent),
-        active: active !== undefined ? active : true,
-      },
+    const updated = await prisma.tourPackage.update({
+      where: { id: req.params.id },
+      data: { active: !pkg.active },
     });
 
-    return res.status(201).json(coupon);
+    return res.json(updated);
   } catch (error) {
-    console.error('Admin create coupon error:', error);
+    console.error('Toggle package error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete a tour package
+router.delete('/packages/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await prisma.tourPackage.delete({ where: { id: req.params.id } });
+    return res.json({ message: 'Package deleted successfully' });
+  } catch (error) {
+    console.error('Delete package error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// List all reviews
+router.get('/reviews', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      include: {
+        user: { select: { name: true, email: true } },
+        package: { select: { name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return res.json(reviews);
+  } catch (error) {
+    console.error('Admin fetch reviews error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete a review
+router.delete('/reviews/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const review = await prisma.review.findUnique({ where: { id: req.params.id } });
+    if (!review) return res.status(404).json({ message: 'Review not found' });
+
+    await prisma.review.delete({ where: { id: req.params.id } });
+
+    // Update package rating average
+    const packageId = review.packageId;
+    const allReviews = await prisma.review.findMany({ where: { packageId } });
+    const avgRating = allReviews.length > 0 
+      ? allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length 
+      : 4.5;
+
+    await prisma.tourPackage.update({
+      where: { id: packageId },
+      data: { rating: Number(avgRating.toFixed(1)) }
+    });
+
+    return res.json({ message: 'Review deleted successfully' });
+  } catch (error) {
+    console.error('Delete review error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });

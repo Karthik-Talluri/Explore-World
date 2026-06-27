@@ -10,21 +10,22 @@ export interface User {
   role: string;
 }
 
-export interface BookingDetails {
-  type: 'FLIGHT' | 'HOTEL' | 'PACKAGE';
-  details: any;
-  totalPrice: number;
+export interface PackageCheckoutDetails {
+  packageId: string;
+  name: string;
+  price: number;
+  availableDates: string[];
 }
 
 interface AppContextType {
   token: string | null;
   user: User | null;
   theme: 'light' | 'dark';
-  activeBooking: BookingDetails | null;
+  activeBooking: PackageCheckoutDetails | null;
   login: (token: string, user: User) => void;
   logout: () => void;
   toggleTheme: () => void;
-  setActiveBooking: (booking: BookingDetails | null) => void;
+  setActiveBooking: (booking: PackageCheckoutDetails | null) => void;
   apiUrl: string;
 }
 
@@ -33,8 +34,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark'); // dark mode by default for premium design
-  const [activeBooking, setActiveBookingState] = useState<BookingDetails | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark'); // dark mode by default for premium gold/navy look
+  const [activeBooking, setActiveBookingState] = useState<PackageCheckoutDetails | null>(null);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -83,7 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const setActiveBooking = (booking: BookingDetails | null) => {
+  const setActiveBooking = (booking: PackageCheckoutDetails | null) => {
     setActiveBookingState(booking);
   };
 

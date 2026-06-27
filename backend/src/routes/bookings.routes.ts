@@ -4,27 +4,29 @@ import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth.middle
 
 const router = Router();
 
-// Create booking (checkout)
+// Create booking (secure tour checkout)
 router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { type, details, totalPrice, couponCode, paymentMethodId } = req.body;
+    const { packageId, travelDate, travelersCount, roomType, specialRequests, paymentMethodId } = req.body;
 
-    if (!userId || !type || !details || !totalPrice) {
-      return res.status(400).json({ message: 'Type, details, and totalPrice are required' });
+    if (!userId || !packageId || !travelDate || !travelersCount || !roomType) {
+      return res.status(400).json({ message: 'All booking fields are required' });
     }
 
-    let finalPrice = totalPrice;
-
-    // Process coupon code if present
-    if (couponCode) {
-      const coupon = await prisma.coupon.findUnique({
-        where: { code: couponCode },
-      });
-      if (coupon && coupon.active) {
-        finalPrice = totalPrice * (1 - coupon.discountPercent / 100);
-      }
+    const pkg = await prisma.tourPackage.findUnique({ where: { id: packageId } });
+    if (!pkg) {
+      return res.status(404).json({ message: 'Tour package not found' });
     }
+
+    // Pricing calculation
+    let basePrice = pkg.price;
+    // Room type modifiers: Double (+10%), Suite (+30%)
+    let modifier = 1.0;
+    if (roomType === 'Double') modifier = 1.1;
+    else if (roomType === 'Suite') modifier = 1.3;
+
+    const totalPrice = Number((basePrice * Number(travelersCount) * modifier).toFixed(2));
 
     // Stripe checkout simulation
     let paymentStatus = 'PAID';
@@ -32,29 +34,42 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
       paymentStatus = 'FAILED';
     }
 
+    const invoiceId = `INV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+
     const booking = await prisma.booking.create({
       data: {
         userId,
-        type,
-        details: JSON.stringify(details),
-        totalPrice: Number(finalPrice.toFixed(2)),
+        packageId,
+        travelDate: new Date(travelDate),
+        travelersCount: Number(travelersCount),
+        roomType,
+        specialRequests: specialRequests || '',
+        totalPrice,
         status: paymentStatus === 'PAID' ? 'CONFIRMED' : 'PENDING',
         paymentStatus,
+        invoiceId,
       },
+      include: {
+        package: true,
+      }
     });
 
-    // Mock Booking Confirmation Email Logging
+    // Console Log Simulated Email Confirmation
     const user = await prisma.user.findUnique({ where: { id: userId } });
     console.log(`
       =======================================================
       EMAIL SENT TO: ${user?.email}
-      SUBJECT: Booking Confirmation - Explore World
+      SUBJECT: Tour Booking Confirmation - ${pkg.name}
       -------------------------------------------------------
       Dear ${user?.name},
 
-      Your travel booking (${type}) has been successfully processed!
-      Booking Reference ID: ${booking.id}
-      Total Amount Paid: $${booking.totalPrice}
+      Your tour reservation has been processed successfully!
+      Invoice Reference: ${invoiceId}
+      Tour Package: ${pkg.name}
+      Travel Date: ${new Date(travelDate).toLocaleDateString()}
+      Travelers: ${travelersCount}
+      Room Type: ${roomType}
+      Total Price Paid: $${totalPrice}
       Status: ${booking.status}
 
       Thank you for choosing Explore World!
@@ -62,7 +77,7 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
     `);
 
     return res.status(201).json({
-      message: paymentStatus === 'PAID' ? 'Booking confirmed successfully' : 'Payment failed. Booking pending.',
+      message: paymentStatus === 'PAID' ? 'Booking confirmed' : 'Payment failed. Booking pending.',
       booking,
     });
   } catch (error) {
@@ -71,7 +86,7 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
   }
 });
 
-// Get User's booking history
+// Get User's bookings
 router.get('/history', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -79,16 +94,21 @@ router.get('/history', authenticateJWT, async (req: AuthenticatedRequest, res: R
 
     const bookings = await prisma.booking.findMany({
       where: { userId },
+      include: { package: true },
       orderBy: { createdAt: 'desc' },
     });
 
-    // Parse the details field back into objects
-    const formattedBookings = bookings.map(b => ({
+    // Format output
+    const formatted = bookings.map(b => ({
       ...b,
-      details: JSON.parse(b.details),
+      package: {
+        ...b.package,
+        images: JSON.parse(b.package.images),
+        itinerary: JSON.parse(b.package.itinerary),
+      }
     }));
 
-    return res.json(formattedBookings);
+    return res.json(formatted);
   } catch (error) {
     console.error('Fetch booking history error:', error);
     return res.status(500).json({ message: 'Internal server error' });
@@ -112,21 +132,24 @@ router.post('/cancel/:id', authenticateJWT, async (req: AuthenticatedRequest, re
     }
 
     if (booking.userId !== userId) {
-      return res.status(403).json({ message: 'Forbidden: You do not own this booking' });
+      return res.status(403).json({ message: 'Forbidden: Unauthorized cancel' });
     }
 
-    const updatedBooking = await prisma.booking.update({
+    const updated = await prisma.booking.update({
       where: { id: bookingId },
-      data: {
-        status: 'CANCELLED',
-      },
+      data: { status: 'CANCELLED' },
+      include: { package: true }
     });
 
     return res.json({
       message: 'Booking cancelled successfully',
       booking: {
-        ...updatedBooking,
-        details: JSON.parse(updatedBooking.details),
+        ...updated,
+        package: {
+          ...updated.package,
+          images: JSON.parse(updated.package.images),
+          itinerary: JSON.parse(updated.package.itinerary),
+        }
       },
     });
   } catch (error) {

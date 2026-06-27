@@ -11,30 +11,30 @@ export default function Footer() {
           <div className="md:col-span-1 space-y-4">
             <Link href="/" className="flex items-center space-x-2 text-primary font-bold text-lg">
               <Compass className="h-5 w-5 text-secondary" />
-              <span className="tracking-wide">Explore World</span>
+              <span className="text-gold-gradient font-bold tracking-wide">Explore World</span>
             </Link>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Your gateway to premium travel packages, luxury accommodations, and seamless flight bookings worldwide.
+              We specialize in offering high-end, luxury tour packages across 26 Indian States and 32 global international countries. Explore the world in style.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Quick Explore</h4>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Holiday Deals</h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/flights" className="text-muted-foreground hover:text-primary transition-colors">
-                  Find Flights
+                <Link href="/packages?category=national" className="text-muted-foreground hover:text-secondary transition-colors">
+                  National Packages
                 </Link>
               </li>
               <li>
-                <Link href="/hotels" className="text-muted-foreground hover:text-primary transition-colors">
-                  Browse Hotels
+                <Link href="/packages?category=international" className="text-muted-foreground hover:text-secondary transition-colors">
+                  International Packages
                 </Link>
               </li>
               <li>
-                <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
-                  Holiday Packages
+                <Link href="/packages?type=Honeymoon" className="text-muted-foreground hover:text-secondary transition-colors">
+                  Honeymoon Getaways
                 </Link>
               </li>
             </ul>
@@ -42,39 +42,39 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Support & Legal</h4>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Legal & Safe</h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <span className="text-muted-foreground hover:text-primary cursor-pointer transition-colors flex items-center space-x-1">
+                <span className="text-muted-foreground hover:text-secondary cursor-pointer transition-colors flex items-center space-x-1">
                   <Shield className="h-3 w-3" />
-                  <span>Travel Insurance</span>
+                  <span>Travel Protection</span>
                 </span>
               </li>
               <li>
-                <span className="text-muted-foreground hover:text-primary cursor-pointer transition-colors flex items-center space-x-1">
+                <span className="text-muted-foreground hover:text-secondary cursor-pointer transition-colors flex items-center space-x-1">
                   <Globe className="h-3 w-3" />
-                  <span>Visa Information</span>
+                  <span>Customs Guides</span>
                 </span>
               </li>
               <li>
-                <span className="text-muted-foreground hover:text-primary cursor-pointer transition-colors">
-                  Privacy Policy
+                <span className="text-muted-foreground hover:text-secondary cursor-pointer transition-colors">
+                  Terms of Service
                 </span>
               </li>
             </ul>
           </div>
 
-          {/* Copyright / Custom */}
+          {/* Subscribe */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Join Newsletter</h4>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Subscribe to Luxury</h4>
             <div className="flex">
               <input
                 type="email"
-                placeholder="Email address"
+                placeholder="Your email address"
                 className="w-full rounded-l-xl border border-input bg-background/50 px-3 py-1.5 text-xs text-foreground focus:outline-none"
               />
-              <button className="rounded-r-xl bg-primary px-3 text-xs font-semibold text-primary-foreground hover:brightness-110">
-                Go
+              <button className="rounded-r-xl bg-secondary px-3.5 text-xs font-bold text-slate-950 hover:brightness-110">
+                Join
               </button>
             </div>
           </div>
@@ -84,7 +84,7 @@ export default function Footer() {
         <div className="border-t border-border/40 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} Explore World Inc. All rights reserved.</p>
           <p className="flex items-center mt-2 sm:mt-0">
-            Crafted with <Heart className="h-3.5 w-3.5 text-destructive mx-1 fill-destructive" /> for travelers worldwide.
+            Crafted with <Heart className="h-3.5 w-3.5 text-secondary mx-1 fill-secondary" /> for luxury travellers.
           </p>
         </div>
       </div>

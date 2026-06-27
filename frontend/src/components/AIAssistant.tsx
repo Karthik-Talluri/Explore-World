@@ -2,15 +2,14 @@
 
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { MessageSquare, X, Send, Compass, Building, Plane, ArrowRight } from 'lucide-react';
+import { MessageSquare, X, Send, Compass, ArrowRight, Palmtree } from 'lucide-react';
 import AuthModal from './AuthModal';
 import CheckoutModal from './CheckoutModal';
 
 interface Message {
   sender: 'user' | 'ai';
   text: string;
-  hotels?: any[];
-  flights?: any[];
+  packages?: any[];
 }
 
 export default function AIAssistant() {
@@ -19,7 +18,7 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: 'ai',
-      text: "Hello! I am your **Explore World AI Assistant**. I can help you plan custom itineraries, find cheap flight deals, or discover luxury hotel bookings. Try asking: *'Plan a trip to Paris'* or *'Show cheap flights to Tokyo'*!",
+      text: "Welcome to **Explore World**! I am your AI Travel Assistant. I specialize in finding the best national and international tour packages. Tell me: *'I want to plan a honeymoon to Maldives'* or *'Show me adventure packages in Kashmir'*!",
     },
   ]);
   const [input, setInput] = useState('');
@@ -52,8 +51,7 @@ export default function AIAssistant() {
         {
           sender: 'ai',
           text: data.reply,
-          hotels: data.hotels,
-          flights: data.flights,
+          packages: data.packages,
         },
       ]);
     } catch (err: any) {
@@ -66,39 +64,25 @@ export default function AIAssistant() {
     }
   };
 
-  const handleBookFlight = (flight: any) => {
+  const handleBookPackage = (pkg: any) => {
     if (!token) {
       setIsAuthOpen(true);
       return;
     }
     setActiveBooking({
-      type: 'FLIGHT',
-      details: flight,
-      totalPrice: flight.price,
+      packageId: pkg.id,
+      name: pkg.name,
+      price: pkg.price,
+      availableDates: pkg.availableDates,
     });
     setIsCheckoutOpen(true);
   };
 
-  const handleBookHotel = (hotel: any) => {
-    if (!token) {
-      setIsAuthOpen(true);
-      return;
-    }
-    setActiveBooking({
-      type: 'HOTEL',
-      details: hotel,
-      totalPrice: hotel.pricePerNight * 2, // assume 2 nights
-    });
-    setIsCheckoutOpen(true);
-  };
-
-  // Helper to parse simple markdown bold
   const renderMessageText = (text: string) => {
     return text.split('\n').map((paragraph, index) => {
-      // Split by ** for bold
       const parts = paragraph.split('**');
       return (
-        <p key={index} className="mb-2 last:mb-0 leading-relaxed text-sm">
+        <p key={index} className="mb-2 last:mb-0 leading-relaxed text-xs sm:text-sm">
           {parts.map((part, i) => (i % 2 === 1 ? <strong key={i} className="font-bold text-foreground">{part}</strong> : part))}
         </p>
       );
@@ -110,7 +94,7 @@ export default function AIAssistant() {
       {/* Floating Chat Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 rounded-full bg-primary p-4 text-primary-foreground shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200"
+        className="fixed bottom-6 right-6 z-40 rounded-full bg-gradient-to-r from-secondary to-amber-600 p-4 text-slate-950 shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200"
         aria-label="AI Travel Assistant"
       >
         {isOpen ? <X className="h-6 w-6" /> : <MessageSquare className="h-6 w-6 animate-pulse" />}
@@ -126,7 +110,7 @@ export default function AIAssistant() {
               <Compass className="h-5 w-5 text-secondary animate-spin-slow" />
               <div>
                 <h3 className="text-sm font-bold text-foreground">AI Travel Assistant</h3>
-                <span className="text-2xs text-emerald-500 font-medium">● Online</span>
+                <span className="text-2xs text-emerald-500 font-semibold">● Online</span>
               </div>
             </div>
             <button
@@ -158,67 +142,37 @@ export default function AIAssistant() {
                 </div>
 
                 {/* Recommendations */}
-                {msg.sender === 'ai' && (msg.hotels?.length || msg.flights?.length) && (
+                {msg.sender === 'ai' && msg.packages && msg.packages.length > 0 && (
                   <div className="w-full mt-3 space-y-3 pl-2">
-                    
-                    {/* Flights suggestions */}
-                    {msg.flights && msg.flights.map((flight, idx) => (
+                    {msg.packages.map((pkg, idx) => (
                       <div
                         key={idx}
-                        className="rounded-xl border border-border bg-background p-3 shadow-sm flex items-center justify-between hover:border-primary/50 transition-colors"
+                        className="rounded-xl border border-secondary/20 bg-background overflow-hidden shadow-sm hover:border-secondary/50 transition-colors"
                       >
-                        <div className="flex items-center space-x-2">
-                          <Plane className="h-4 w-4 text-primary" />
-                          <div>
-                            <span className="text-xs font-semibold block text-foreground">
-                              Flight {flight.flightNumber}
-                            </span>
-                            <span className="text-2xs text-muted-foreground">
-                              {flight.departureCity} ➔ {flight.arrivalCity}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleBookFlight(flight)}
-                          className="flex items-center space-x-1 rounded-lg bg-primary/10 hover:bg-primary/20 px-2 py-1 text-2xs font-semibold text-primary transition-all"
-                        >
-                          <span>${flight.price}</span>
-                          <ArrowRight className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {/* Hotel suggestions */}
-                    {msg.hotels && msg.hotels.map((hotel, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-xl border border-border bg-background overflow-hidden shadow-sm hover:border-primary/50 transition-colors"
-                      >
-                        {hotel.images && hotel.images[0] && (
+                        {pkg.images && pkg.images[0] && (
                           <img
-                            src={hotel.images[0]}
-                            alt={hotel.name}
+                            src={pkg.images[0]}
+                            alt={pkg.name}
                             className="h-24 w-full object-cover"
                           />
                         )}
                         <div className="p-2.5 flex items-center justify-between">
                           <div>
-                            <span className="text-xs font-semibold block text-foreground">
-                              {hotel.name}
+                            <span className="text-xs font-bold block text-foreground truncate max-w-44">
+                              {pkg.name}
                             </span>
-                            <span className="text-2xs text-muted-foreground">{hotel.location}</span>
+                            <span className="text-2xs text-muted-foreground">{pkg.destination} • {pkg.durationDays} Days</span>
                           </div>
                           <button
-                            onClick={() => handleBookHotel(hotel)}
-                            className="flex items-center space-x-1 rounded-lg bg-secondary/10 hover:bg-secondary/20 px-2 py-1 text-2xs font-semibold text-secondary transition-all"
+                            onClick={() => handleBookPackage(pkg)}
+                            className="flex items-center space-x-1 rounded-lg bg-secondary/15 hover:bg-secondary/25 px-2 py-1 text-2xs font-bold text-secondary transition-all"
                           >
-                            <span>${hotel.pricePerNight}/n</span>
+                            <span>${pkg.price}</span>
                             <ArrowRight className="h-3 w-3" />
                           </button>
                         </div>
                       </div>
                     ))}
-
                   </div>
                 )}
               </div>
@@ -236,16 +190,16 @@ export default function AIAssistant() {
           <form onSubmit={handleSend} className="h-16 border-t border-border p-3 flex space-x-2 bg-background">
             <input
               type="text"
-              placeholder="Ask for recommendations..."
+              placeholder="Ask for holiday planning..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={loading}
-              className="flex-1 rounded-xl border border-input bg-muted/30 px-3 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="flex-1 rounded-xl border border-input bg-muted/30 px-3 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-secondary"
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-xl bg-primary p-2 text-primary-foreground hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all"
+              className="rounded-xl bg-secondary p-2 text-slate-950 hover:brightness-110 active:scale-95 disabled:opacity-50 transition-all"
             >
               <Send className="h-4 w-4" />
             </button>
@@ -254,7 +208,7 @@ export default function AIAssistant() {
         </div>
       )}
 
-      {/* Auth and Checkout Modals for drawer flow */}
+      {/* Modals */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <CheckoutModal isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} onSuccess={() => {}} />
     </>

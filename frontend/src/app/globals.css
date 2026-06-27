@@ -1,71 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fafafa;
-  --foreground: #0f172a;
+  --background: #fcfdfd;
+  --foreground: #0b1528;
   
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #0b1528;
   
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
+  --popover-foreground: #0b1528;
   
-  --primary: #4f46e5;
+  /* Luxury Blue & Gold */
+  --primary: #0f2d59; /* Deep Royal Navy */
   --primary-foreground: #ffffff;
   
-  --secondary: #0ea5e9;
-  --secondary-foreground: #0f172a;
+  --secondary: #c5a059; /* Polished Gold */
+  --secondary-foreground: #0b1528;
   
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted: #f3f6f9;
+  --muted-foreground: #5e6d82;
   
-  --accent: #f8fafc;
-  --accent-foreground: #0f172a;
+  --accent: #f7f9fc;
+  --accent-foreground: #0f2d59;
   
-  --destructive: #ef4444;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #4f46e5;
+  --ring: #c5a059;
   
   --radius: 1rem;
   
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(197, 160, 89, 0.2);
 }
 
 .dark {
-  --background: #0b0f19;
-  --foreground: #f8fafc;
+  --background: #060b13;
+  --foreground: #f1f5f9;
   
-  --card: #111827;
-  --card-foreground: #f8fafc;
+  --card: #0b1220;
+  --card-foreground: #f1f5f9;
   
-  --popover: #111827;
-  --popover-foreground: #f8fafc;
+  --popover: #0b1220;
+  --popover-foreground: #f1f5f9;
   
-  --primary: #6366f1;
+  --primary: #1d3557;
   --primary-foreground: #ffffff;
   
-  --secondary: #38bdf8;
-  --secondary-foreground: #0b0f19;
+  --secondary: #e5c17d; /* Polished Gold (lighter for dark mode) */
+  --secondary-foreground: #060b13;
   
-  --muted: #1f2937;
-  --muted-foreground: #9ca3af;
+  --muted: #131e31;
+  --muted-foreground: #8aa0b5;
   
-  --accent: #1f2937;
-  --accent-foreground: #f8fafc;
+  --accent: #131e31;
+  --accent-foreground: #f1f5f9;
   
-  --destructive: #f87171;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
   
-  --border: #374151;
-  --input: #374151;
-  --ring: #6366f1;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #e5c17d;
   
-  --glass-bg: rgba(17, 24, 39, 0.7);
-  --glass-border: rgba(55, 65, 81, 0.8);
+  --glass-bg: rgba(11, 18, 32, 0.7);
+  --glass-border: rgba(229, 193, 125, 0.15);
 }
 
 @theme {
@@ -99,12 +100,20 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Glassmorphism utility */
+/* Glassmorphism utility with luxury gold borders */
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--glass-border);
+}
+
+/* Gold Gradient Text */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #c5a059 0%, #f3d493 50%, #b48a3c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Custom Scrollbar */
@@ -123,14 +132,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--muted-foreground);
+  background: var(--secondary);
 }
 
-/* Smooth fade-in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -139,5 +147,5 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

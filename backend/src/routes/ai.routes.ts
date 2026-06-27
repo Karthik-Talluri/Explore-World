@@ -3,7 +3,6 @@ import prisma from '../db';
 
 const router = Router();
 
-// Chat endpoint
 router.post('/chat', async (req, res) => {
   try {
     const { message } = req.body;
@@ -13,12 +12,11 @@ router.post('/chat', async (req, res) => {
     }
 
     const query = message.toLowerCase();
-    let responseText = '';
-    let suggestedHotels: any[] = [];
-    let suggestedFlights: any[] = [];
+    let reply = '';
+    let suggestedPackages: any[] = [];
 
     // Simple keyword extraction for destinations
-    const destinations = ['paris', 'london', 'tokyo', 'dubai', 'sydney', 'new york'];
+    const destinations = ['paris', 'london', 'tokyo', 'dubai', 'sydney', 'new york', 'kashmir', 'rajasthan', 'goa', 'kerala', 'maldives', 'bali', 'switzerland'];
     let matchedDestination = '';
 
     for (const dest of destinations) {
@@ -31,53 +29,45 @@ router.post('/chat', async (req, res) => {
     if (matchedDestination) {
       const capDest = matchedDestination.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-      // Query real DB hotels for this destination
-      const hotels = await prisma.hotel.findMany({
-        where: { location: { contains: matchedDestination } },
+      // Find packages matching destination in name or destination field
+      const packages = await prisma.tourPackage.findMany({
+        where: {
+          OR: [
+            { destination: { contains: matchedDestination } },
+            { name: { contains: matchedDestination } },
+          ],
+          active: true,
+        },
         take: 2,
       });
 
-      // Query real DB flights
-      const flights = await prisma.flight.findMany({
-        where: { arrivalCity: { equals: matchedDestination.toUpperCase() } },
-        take: 2,
-      });
-
-      suggestedHotels = hotels.map(h => ({
-        ...h,
-        images: JSON.parse(h.images),
+      suggestedPackages = packages.map(p => ({
+        ...p,
+        images: JSON.parse(p.images),
+        itinerary: JSON.parse(p.itinerary),
       }));
-      suggestedFlights = flights;
 
-      responseText = `I've analyzed your request for **${capDest}**! Here is a custom curated 3-day travel plan:
+      reply = `I have analyzed your interest in traveling to **${capDest}**! Here is a luxury customized tour package plan for you:
 
-*   **Day 1: Arrival & Exploration** - Check into your hotel, stroll around the city center, and enjoy a local gourmet dinner.
-*   **Day 2: Historical & Cultural Tour** - Visit the famous landmarks, local museums, and scenic viewpoints.
-*   **Day 3: Shopping & Leisure** - Explore local boutiques, enjoy a relaxing afternoon at a garden or cafe, and prep for departure.
+We have prepared high-end itineraries featuring premium hotel stays, private transfers, and excursions. 
 
-Below are top deals matching your query for flights and accommodations. Let me know if you would like me to adjust the budget, class, or duration!`;
-
+You can review the recommended tour package details below and book your travel dates directly! Let me know if you would like me to find packages for other destinations.`;
     } else if (query.includes('budget') || query.includes('cheap')) {
-      responseText = `If you are looking for a budget-friendly escape, I recommend looking at **Paris** or **Tokyo** in the coming weeks. We have special off-season hotel discounts up to 30% off! Try searching for Economy flights and applying the coupon code **EXPLORE15** at checkout for an extra 15% off.`;
-    } else if (query.includes('weather') || query.includes('season')) {
-      responseText = `Here is the current season guide for our top destinations:
-*   **Tokyo**: Mild and sunny, perfect for sightseeing.
-*   **Paris**: Beautiful summer warmth, ideal for café terraces.
-*   **Sydney**: Cool winter breeze, great for coastal walks.
-Would you like me to find hotels in any of these locations?`;
+      reply = `If you are looking for budget-friendly packages, we offer special rates for **Rajasthan** and **Kashmir** tours starting at just $499! Apply the coupon code **EXPLORE15** at checkout for an extra 15% off your first reservation.`;
+    } else if (query.includes('honeymoon') || query.includes('romantic')) {
+      reply = `For the ultimate romantic getaway, I highly recommend our **Maldives Overwater Pool Villa Getaway** or **Kashmir Paradise Valley Tour**. Both packages feature secluded stays, couple activities, and candle-lit dinners.`;
     } else {
-      responseText = `Hello! I am your AI Travel Assistant. I can help you:
-*   Plan customized 3-day itineraries (try asking: *"Plan a trip to Tokyo"* or *"What can I do in Paris?"*)
-*   Find cheap flights or budget hotel recommendations
-*   Answer travel insurance and visa requirements
+      reply = `Hello! I am your **Explore World AI Travel Assistant**. I can help you find:
+*   Curated National & International Tour Packages (try: *"Show me tours in Kashmir"* or *"Plan a trip to Dubai"*)
+*   Honeymoon or Family holiday recommendations
+*   Itinerary summaries, meal details, and package inclusions
 
 Where would you like to travel next?`;
     }
 
     return res.json({
-      reply: responseText,
-      hotels: suggestedHotels,
-      flights: suggestedFlights,
+      reply,
+      packages: suggestedPackages,
     });
   } catch (error) {
     console.error('AI chat error:', error);
