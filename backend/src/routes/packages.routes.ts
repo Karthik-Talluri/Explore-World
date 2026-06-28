@@ -4,6 +4,7 @@ import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth.middle
 
 const router = Router();
 
+console.log("packages.routes.ts loaded");
 router.get("/", async (req, res) => {
   try {
     const packages = await prisma.tourPackage.findMany({
