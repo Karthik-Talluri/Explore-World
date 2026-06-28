@@ -17,7 +17,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
   
   // Selection states
   const [travelDate, setTravelDate] = useState('');
-  const [travelersCount, setTravelersCount] = useState(1);
+  const [travelersCount, setTravelersCount] = useState(activeBooking?.travelersCount || 1);
   const [roomType, setRoomType] = useState<'Single' | 'Double' | 'Suite'>('Single');
   const [specialRequests, setSpecialRequests] = useState('');
 

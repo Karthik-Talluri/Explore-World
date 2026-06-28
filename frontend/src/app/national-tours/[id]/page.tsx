@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import { useApp } from '@/context/AppContext';
 import Link from 'next/link';
 
 interface Attraction {
@@ -232,12 +233,25 @@ const STATE_ATTRACTIONS: Record<string, Attraction[]> = {
 export default function StateAttractionsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { apiUrl } = useApp();
 
   const decodedId = typeof id === 'string' ? decodeURIComponent(id).toLowerCase() : '';
   const attractions = STATE_ATTRACTIONS[decodedId] || [];
 
-  const handleCardClick = (name: string) => {
-    router.push(`/packages?destination=${encodeURIComponent(name)}`);
+  const handleCardClick = async (name: string) => {
+    try {
+      // Find package by parent state name
+      const res = await fetch(`${apiUrl}/api/packages/search?destination=${encodeURIComponent(decodedId)}`);
+      const data = await res.json();
+      if (res.ok && data.length > 0) {
+        router.push(`/packages/${data[0].id}`);
+      } else {
+        alert('Package details are currently unavailable for this destination.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error fetching package details.');
+    }
   };
 
   if (attractions.length === 0) {

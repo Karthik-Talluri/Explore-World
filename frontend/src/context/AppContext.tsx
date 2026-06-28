@@ -15,6 +15,7 @@ export interface PackageCheckoutDetails {
   name: string;
   price: number;
   availableDates: string[];
+  travelersCount?: number;
 }
 
 interface AppContextType {
