@@ -46,7 +46,7 @@ export default function Home() {
             
             {/* CARD 1: National Tours */}
             <div
-              onClick={() => router.push('/packages?category=national')}
+              onClick={() => router.push('/national-tours')}
               className="group relative rounded-3xl border border-secondary/20 bg-slate-900/40 backdrop-blur-md overflow-hidden p-1 shadow-2xl hover:border-secondary/40 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
             >
               <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden">
@@ -75,7 +75,7 @@ export default function Home() {
 
             {/* CARD 2: International Tours */}
             <div
-              onClick={() => router.push('/packages?category=international')}
+              onClick={() => router.push('/international-tours')}
               className="group relative rounded-3xl border border-secondary/20 bg-slate-900/40 backdrop-blur-md overflow-hidden p-1 shadow-2xl hover:border-secondary/40 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer"
             >
               <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden">

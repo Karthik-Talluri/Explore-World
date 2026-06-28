@@ -52,13 +52,13 @@ export default function Navbar() {
               Home
             </Link>
             <Link
-              href="/packages?category=national"
+              href="/national-tours"
               className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
             >
               National Tours
             </Link>
             <Link
-              href="/packages?category=international"
+              href="/international-tours"
               className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
             >
               International Tours
