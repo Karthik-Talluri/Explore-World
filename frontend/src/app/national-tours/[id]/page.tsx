@@ -1,506 +1,300 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { useApp } from '@/context/AppContext';
-import { Palmtree, MapPin, Calendar, Clock, Star, Landmark, Send, CheckCircle2, XCircle, ShieldCheck, Mail, Compass, Car } from 'lucide-react';
-import AuthModal from '@/components/AuthModal';
-import CheckoutModal from '@/components/CheckoutModal';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-interface Review {
-  id: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-  user: { name: string };
-}
-
-interface ItineraryDay {
-  day: number;
-  title: string;
-  description: string;
-}
-
-interface TourPackage {
-  id: string;
+interface Attraction {
   name: string;
-  category: string;
-  destination: string;
-  price: number;
-  durationDays: number;
-  bestSeason: string;
-  attractions: string;
-  hotelDetails: string;
-  mealPlan: string;
-  transportation: string;
-  itinerary: ItineraryDay[];
-  visaRequirement: string;
-  currency: string;
-  weather: string;
-  inclusions: string;
-  exclusions: string;
-  rating: number;
-  availableDates: string[];
-  images: string[];
-  type: string;
-  reviews: Review[];
+  image: string;
 }
 
-export default function NationalTourDetailPage() {
+const STATE_ATTRACTIONS: Record<string, Attraction[]> = {
+  "andhra pradesh": [
+    { name: "Araku Valley", image: "https://images.unsplash.com/photo-1590001155093-a3c66ab0c3ff?w=400" },
+    { name: "Tirupati Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Borra Caves", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Visakhapatnam Beaches", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" }
+  ],
+  "arunachal pradesh": [
+    { name: "Tawang Monastery", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400" },
+    { name: "Ziro Valley", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" },
+    { name: "Namdapha National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Sela Pass", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" }
+  ],
+  "assam": [
+    { name: "Kaziranga National Park", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" },
+    { name: "Kamakhya Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Majuli Island", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Haflong Hills", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" }
+  ],
+  "bihar": [
+    { name: "Bodh Gaya (Mahabodhi Temple)", image: "https://images.unsplash.com/photo-1622396481328-9b1b78cdd9fd?w=400" },
+    { name: "Nalanda Ruins", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" },
+    { name: "Sanjay Gandhi Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Rajgir Hills", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" }
+  ],
+  "chhattisgarh": [
+    { name: "Chitrakote Falls", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Bastar Palace", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400" },
+    { name: "Kanger Valley National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Bhoramdeo Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" }
+  ],
+  "goa": [
+    { name: "Calangute Beach", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400" },
+    { name: "Basilica of Bom Jesus", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Dudhsagar Falls", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Fort Aguada", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" }
+  ],
+  "gujarat": [
+    { name: "Rann of Kutch", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" },
+    { name: "Gir National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Somnath Temple", image: "https://images.unsplash.com/photo-1599930190518-e3952a220556?w=400" },
+    { name: "Statue of Unity", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400" }
+  ],
+  "haryana": [
+    { name: "Sultanpur National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Kurukshetra Battlefield", image: "https://images.unsplash.com/photo-1543872084-c7bd3822856f?w=400" },
+    { name: "Surajkund Lake", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Pinjore Gardens", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" }
+  ],
+  "himachal pradesh": [
+    { name: "Solang Valley", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Rohtang Pass", image: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=400" },
+    { name: "Shimla Mall Road", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400" },
+    { name: "Spiti Valley", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" }
+  ],
+  "jharkhand": [
+    { name: "Hundru Falls", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Deoghar Baidyanath Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Betla National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Jubilee Park", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" }
+  ],
+  "karnataka": [
+    { name: "Hampi Ruins", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400" },
+    { name: "Mysore Palace", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400" },
+    { name: "Coorg Coffee Plantations", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" },
+    { name: "Jog Falls", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" }
+  ],
+  "kerala": [
+    { name: "Alleppey Backwaters", image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=400" },
+    { name: "Munnar Tea Gardens", image: "https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=400" },
+    { name: "Wayanad Wildlife", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Kovalam Beach", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400" }
+  ],
+  "madhya pradesh": [
+    { name: "Khajuraho Temples", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Sanchi Stupa", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400" },
+    { name: "Kanha National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Gwalior Fort", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" }
+  ],
+  "maharashtra": [
+    { name: "Ajanta Caves", image: "https://images.unsplash.com/photo-1598128558393-70ff21433be0?w=400" },
+    { name: "Gateway of India", image: "https://images.unsplash.com/photo-1562979314-bee7453e911c?w=400" },
+    { name: "Lonavala Hills", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" },
+    { name: "Mahabaleshwar", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400" }
+  ],
+  "manipur": [
+    { name: "Loktak Lake", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400" },
+    { name: "Kangla Fort", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" },
+    { name: "Imphal Valley", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Shirui Peak", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" }
+  ],
+  "meghalaya": [
+    { name: "Living Root Bridges", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Nohkalikai Falls", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Mawlynnong Village", image: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" },
+    { name: "Shillong Peak", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" }
+  ],
+  "mizoram": [
+    { name: "Vantawng Falls", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Phawngpui Blue Mountain", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Reiek Heritage Village", image: "https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=400" },
+    { name: "Tam Dil Lake", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400" }
+  ],
+  "nagaland": [
+    { name: "Dzukou Valley", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Kohima War Cemetery", image: "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?w=400" },
+    { name: "Khonoma Village", image: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=400" },
+    { name: "Kisama Heritage Village", image: "https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=400" }
+  ],
+  "odisha": [
+    { name: "Konark Sun Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Jagannath Puri Temple", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400" },
+    { name: "Chilika Lake", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Udayagiri Caves", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" }
+  ],
+  "punjab": [
+    { name: "Golden Temple", image: "https://images.unsplash.com/photo-1514222134-b57cbb8ce073?w=400" },
+    { name: "Wagah Border", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400" },
+    { name: "Jallianwala Bagh", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Rock Garden", image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400" }
+  ],
+  "rajasthan": [
+    { name: "Amber Palace", image: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=400" },
+    { name: "Hawa Mahal", image: "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=400" },
+    { name: "Lake Pichola", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400" },
+    { name: "Mehrangarh Fort", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" }
+  ],
+  "sikkim": [
+    { name: "Tsomgo Lake", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400" },
+    { name: "Nathula Pass", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Gurudongmar Lake", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Rumtek Monastery", image: "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?w=400" }
+  ],
+  "tamil nadu": [
+    { name: "Meenakshi Amman Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Ooty Botanical Gardens", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Marina Beach", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Shore Temple", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400" }
+  ],
+  "telangana": [
+    { name: "Charminar", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400" },
+    { name: "Golconda Fort", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" },
+    { name: "Ramappa Temple", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" },
+    { name: "Hussain Sagar Lake", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" }
+  ],
+  "tripura": [
+    { name: "Neermahal Palace", image: "https://images.unsplash.com/photo-1508193638397-1c4234db14d8?w=400" },
+    { name: "Unakoti Rock Carvings", image: "https://images.unsplash.com/photo-1598128558393-70ff21433be0?w=400" },
+    { name: "Ujjayanta Palace", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400" },
+    { name: "Sepahijala Sanctuary", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" }
+  ],
+  "uttar pradesh": [
+    { name: "Taj Mahal", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400" },
+    { name: "Varanasi Ghats", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Agra Fort", image: "https://images.unsplash.com/photo-1509840841025-9088ba78a826?w=400" },
+    { name: "Fatehpur Sikri", image: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?w=400" }
+  ],
+  "uttarakhand": [
+    { name: "Rishikesh Lakshman Jhula", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400" },
+    { name: "Valley of Flowers", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" },
+    { name: "Nainital Lake", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400" },
+    { name: "Kedarnath Temple", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" }
+  ],
+  "west bengal": [
+    { name: "Darjeeling Himalayan Railway", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Sundarbans National Park", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Victoria Memorial", image: "https://images.unsplash.com/photo-1558431382-27e303142255?w=400" },
+    { name: "Howrah Bridge", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" }
+  ],
+  
+  // Union Territories
+  "andaman and nicobar islands": [
+    { name: "Radhanagar Beach", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Cellular Jail", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400" },
+    { name: "Ross Island", image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" },
+    { name: "Havelock Island", image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=400" }
+  ],
+  "chandigarh": [
+    { name: "Rock Garden", image: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=400" },
+    { name: "Sukhna Lake", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Rose Garden", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Open Hand Monument", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400" }
+  ],
+  "dadra and nagar haveli and daman and diu": [
+    { name: "Diu Fort", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" },
+    { name: "Naida Caves", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Devka Beach", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Jampore Beach", image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=400" }
+  ],
+  "delhi": [
+    { name: "Red Fort", image: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400" },
+    { name: "Qutub Minar", image: "https://images.unsplash.com/photo-1585135497273-1a86b09fe70e?w=400" },
+    { name: "India Gate", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400" },
+    { name: "Lotus Temple", image: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=400" }
+  ],
+  "jammu and kashmir": [
+    { name: "Dal Lake", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Gulmarg Gondola", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Shalimar Bagh", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" },
+    { name: "Pahalgam Valley", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" }
+  ],
+  "ladakh": [
+    { name: "Pangong Lake", image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400" },
+    { name: "Nubra Valley", image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400" },
+    { name: "Khardung La Pass", image: "https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=400" },
+    { name: "Magnetic Hill", image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400" }
+  ],
+  "lakshadweep": [
+    { name: "Agatti Island", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Bangaram Beach", image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=400" },
+    { name: "Kavaratti Lagoon", image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" },
+    { name: "Minicoy Lighthouse", image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=400" }
+  ],
+  "puducherry": [
+    { name: "Promenade Beach", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400" },
+    { name: "Auroville Dome", image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400" },
+    { name: "French Quarter Streets", image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?w=400" },
+    { name: "Paradise Beach", image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" }
+  ]
+};
+
+export default function StateAttractionsPage() {
   const { id } = useParams();
-  const { apiUrl, token, setActiveBooking } = useApp();
+  const router = useRouter();
 
-  const [pkg, setPkg] = useState<TourPackage | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const decodedId = typeof id === 'string' ? decodeURIComponent(id).toLowerCase() : '';
+  const attractions = STATE_ATTRACTIONS[decodedId] || [];
 
-  // Tabs & Accordions
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'hotel' | 'reviews'>('itinerary');
-  const [openItineraryDay, setOpenItineraryDay] = useState<number | null>(1);
-
-  // Inquiry Form
-  const [inquiryName, setInquiryName] = useState('');
-  const [inquiryEmail, setInquiryEmail] = useState('');
-  const [inquiryMsg, setInquiryMsg] = useState('');
-  const [inquiryLoading, setInquiryLoading] = useState(false);
-  const [inquirySuccess, setInquirySuccess] = useState(false);
-
-  // Review Form
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewLoading, setReviewLoading] = useState(false);
-
-  // Modals
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-
-  const fetchDetails = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`${apiUrl}/api/packages/${id}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to load details');
-      setPkg(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+  const handleCardClick = (name: string) => {
+    router.push(`/packages?destination=${encodeURIComponent(name)}`);
   };
 
-  useEffect(() => {
-    if (id) fetchDetails();
-  }, [id]);
-
-  const handleInquiry = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inquiryName || !inquiryEmail || !inquiryMsg) return;
-
-    setInquiryLoading(true);
-    setInquirySuccess(false);
-    try {
-      const res = await fetch(`${apiUrl}/api/packages/${id}/inquire`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: inquiryName, email: inquiryEmail, message: inquiryMsg }),
-      });
-      if (!res.ok) throw new Error('Inquiry submission failed');
-      setInquirySuccess(true);
-      setInquiryName('');
-      setInquiryEmail('');
-      setInquiryMsg('');
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setInquiryLoading(false);
-    }
-  };
-
-  const handleAddReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) {
-      setIsAuthOpen(true);
-      return;
-    }
-    if (!reviewComment.trim() || !pkg) return;
-
-    setReviewLoading(true);
-    try {
-      const res = await fetch(`${apiUrl}/api/packages/${pkg.id}/reviews`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ rating: reviewRating, comment: reviewComment }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Review post failed');
-
-      const updatedReviews = [data, ...(pkg.reviews || [])];
-      setPkg({
-        ...pkg,
-        reviews: updatedReviews,
-        rating: Number(
-          (updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length).toFixed(1)
-        ),
-      });
-      setReviewComment('');
-      alert('Review posted successfully!');
-    } catch (err: any) {
-      alert(err.message);
-    } finally {
-      setReviewLoading(false);
-    }
-  };
-
-  const handleBookNow = () => {
-    if (!token) {
-      setIsAuthOpen(true);
-      return;
-    }
-    if (!pkg) return;
-    setActiveBooking({
-      packageId: pkg.id,
-      name: pkg.name,
-      price: pkg.price,
-      availableDates: pkg.availableDates,
-    });
-    setIsCheckoutOpen(true);
-  };
-
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-32 text-center space-y-4 bg-slate-950 text-slate-100 min-h-screen">
-        <Compass className="h-10 w-10 text-secondary animate-spin mx-auto" />
-        <p className="text-xs text-slate-400">Loading tour itinerary...</p>
-      </div>
-    );
-  }
-
-  if (error || !pkg) {
+  if (attractions.length === 0) {
     return (
       <div className="mx-auto max-w-md px-4 py-32 text-center bg-slate-950 text-slate-100 min-h-screen">
-        <div className="rounded-2xl bg-rose-950/20 border border-rose-500/30 p-6">
-          <h4 className="font-bold text-white">Tour Detail Error</h4>
-          <p className="text-xs text-slate-400">{error || 'Unable to load tour details'}</p>
+        <div className="rounded-2xl bg-rose-950/20 border border-rose-500/30 p-6 space-y-3">
+          <h4 className="font-bold text-white">Location Not Found</h4>
+          <p className="text-xs text-slate-400">No attractions directory found for "{id}"</p>
           <Link href="/national-tours" className="text-xs text-secondary font-bold hover:underline block mt-3">
-            Back to National Packages
+            Back to National Tours
           </Link>
         </div>
       </div>
     );
   }
 
-  const heroImg = pkg.images[0] || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200';
+  // Proper title capitalization (e.g. jammu and kashmir -> Jammu and Kashmir)
+  const displayTitle = decodedId
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100">
+    <div className="mx-auto max-w-7xl w-full px-4 py-28 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-950 text-slate-100 min-h-screen">
       
-      {/* Hero Banner */}
-      <section className="relative h-80 sm:h-[480px] w-full bg-slate-900 overflow-hidden pt-20">
-        <img
-          src={heroImg}
-          alt={pkg.name}
-          className="h-full w-full object-cover opacity-60"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/80" />
-        
-        {/* Banner Details */}
-        <div className="absolute bottom-6 left-4 right-4 max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
-          <div className="space-y-2">
-            <span className="rounded bg-secondary px-3 py-1 text-4xs font-bold text-slate-950 uppercase tracking-widest">
-              🇮🇳 Indian State Tour • {pkg.type}
-            </span>
-            <h1 className="text-xl sm:text-4xl font-black text-white">{pkg.name}</h1>
-            <p className="text-xs text-slate-300 flex items-center space-x-1">
-              <MapPin className="h-3.5 w-3.5 text-secondary" />
-              <span>State Location: {pkg.destination}</span>
-            </p>
-          </div>
+      {/* Title block */}
+      <div className="text-center space-y-2">
+        <span className="text-xs font-bold text-secondary uppercase tracking-widest block">🇮🇳 Famous Landmarks</span>
+        <h1 className="text-3xl sm:text-5xl font-black text-white">{displayTitle} Attractions</h1>
+        <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto font-medium">
+          Discover all major tourist attractions in {displayTitle}. Select any landmark to view tour packages.
+        </p>
+      </div>
 
-          <div className="flex items-center space-x-2 text-xs font-semibold text-amber-400 bg-slate-950/60 px-3 py-1.5 rounded-lg border border-white/10">
-            <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-            <span>{pkg.rating.toFixed(1)} Rating</span>
-          </div>
-        </div>
-      </section>
-
-      {/* QUICK FACTS BAR */}
-      <section className="bg-slate-900/40 border-b border-secondary/10 py-5">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div>
-            <Clock className="h-5 w-5 text-secondary mx-auto mb-1" />
-            <span className="text-4xs text-slate-400 uppercase font-bold">Duration</span>
-            <span className="text-xs font-bold block">{pkg.durationDays} Days / {pkg.durationDays - 1} Nights</span>
-          </div>
-          <div>
-            <Calendar className="h-5 w-5 text-secondary mx-auto mb-1" />
-            <span className="text-4xs text-slate-400 uppercase font-bold">Best Season</span>
-            <span className="text-xs font-bold block">{pkg.bestSeason}</span>
-          </div>
-          <div>
-            <ShieldCheck className="h-5 w-5 text-secondary mx-auto mb-1" />
-            <span className="text-4xs text-slate-400 uppercase font-bold">State Permits</span>
-            <span className="text-xs font-bold block">{pkg.visaRequirement === 'None' ? 'Not Required' : pkg.visaRequirement}</span>
-          </div>
-          <div>
-            <Landmark className="h-5 w-5 text-secondary mx-auto mb-1" />
-            <span className="text-4xs text-slate-400 uppercase font-bold">Currency accepted</span>
-            <span className="text-xs font-bold block">{pkg.currency} (INR)</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Grid */}
-      <section className="mx-auto max-w-7xl w-full px-4 py-12 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        
-        <div className="lg:col-span-2 space-y-8">
-          {/* Tab Navigation */}
-          <div className="flex space-x-6 border-b border-secondary/10 pb-3">
-            {[
-              { label: 'Itinerary Plan', value: 'itinerary' },
-              { label: 'Hotel & Stays', value: 'hotel' },
-              { label: 'Reviews', value: 'reviews' },
-            ].map((tab) => (
-              <button
-                key={tab.value}
-                onClick={() => setActiveTab(tab.value as any)}
-                className={`text-xs font-bold uppercase tracking-wider pb-2 border-b-2 transition-colors ${
-                  activeTab === tab.value ? 'border-secondary text-secondary' : 'border-transparent text-slate-400'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* TAB CONTENTS */}
-          {activeTab === 'itinerary' && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-secondary">Day-to-Day Travel Itinerary</h3>
-              <div className="space-y-3">
-                {pkg.itinerary.map((dayPlan) => (
-                  <div key={dayPlan.day} className="rounded-2xl border border-secondary/15 bg-slate-900/30">
-                    <button
-                      onClick={() => setOpenItineraryDay(openItineraryDay === dayPlan.day ? null : dayPlan.day)}
-                      className="w-full flex items-center justify-between p-4 font-bold text-xs sm:text-sm text-white text-left"
-                    >
-                      <span>Day {dayPlan.day}: {dayPlan.title}</span>
-                      <span>{openItineraryDay === dayPlan.day ? '▼' : '▶'}</span>
-                    </button>
-                    {openItineraryDay === dayPlan.day && (
-                      <div className="p-4 border-t border-secondary/10 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                        {dayPlan.description}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'hotel' && (
-            <div className="space-y-6">
-              <div className="rounded-2xl border border-secondary/15 bg-slate-900/30 p-5 space-y-3">
-                <h4 className="text-xs font-bold text-secondary uppercase tracking-wider">Hotel & Accommodations</h4>
-                <p className="text-xs text-slate-300">{pkg.hotelDetails}</p>
-                <div className="border-t border-secondary/10 pt-3 text-xs">
-                  <span className="text-slate-400">Meal Plan:</span> <strong className="text-white">{pkg.mealPlan}</strong>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-secondary/15 bg-slate-900/30 p-5 space-y-3">
-                <h4 className="text-xs font-bold text-secondary uppercase tracking-wider">Transfers & Escorted transit</h4>
-                <div className="flex items-center space-x-3 text-xs text-slate-300">
-                  <Car className="h-5 w-5 text-secondary shrink-0" />
-                  <div>
-                    <p>{pkg.transportation}</p>
-                    <p className="text-3xs text-slate-400 mt-1">Includes pickup from nearest railway port/airport and drop-off on departure.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'reviews' && (
-            <div className="space-y-6">
-              {/* Submission Form */}
-              <form onSubmit={handleAddReview} className="glass rounded-xl p-4 border border-secondary/20 space-y-3">
-                <h4 className="text-xs font-bold uppercase text-white">Submit Travel Review</h4>
-                <div className="flex items-center space-x-2 text-xs">
-                  <span className="text-slate-300">Rating:</span>
-                  <div className="flex space-x-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        type="button"
-                        key={star}
-                        onClick={() => setReviewRating(star)}
-                        className="focus:outline-none"
-                      >
-                        <Star className={`h-4.5 w-4.5 ${reviewRating >= star ? 'fill-amber-400 text-amber-400' : 'text-slate-600'}`} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    required
-                    value={reviewComment}
-                    onChange={(e) => setReviewComment(e.target.value)}
-                    placeholder="E.g., Beautiful stays and private car was punctual..."
-                    className="flex-grow rounded-lg border border-border/40 bg-background/50 px-3 py-1.5 text-xs text-foreground focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={reviewLoading}
-                    className="rounded-lg bg-secondary px-4 py-1.5 text-xs font-bold text-slate-950 hover:brightness-110 flex items-center space-x-1"
-                  >
-                    <Send className="h-3.5 w-3.5" />
-                    <span>Send</span>
-                  </button>
-                </div>
-              </form>
-
-              {/* Reviews List */}
-              <div className="space-y-4">
-                {pkg.reviews?.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic text-center py-4">No reviews logged yet.</p>
-                ) : (
-                  pkg.reviews?.map((rev, idx) => (
-                    <div key={idx} className="rounded-xl border border-secondary/15 bg-slate-900/30 p-4 space-y-2">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-white">{rev.user.name}</span>
-                        <div className="flex items-center space-x-0.5 text-amber-400">
-                          <span>★</span>
-                          <span>{rev.rating}</span>
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-300">{rev.comment}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* INCLUSIONS & EXCLUSIONS */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-secondary/10">
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">Inclusions</h3>
-              <ul className="space-y-1.5 text-xs">
-                {pkg.inclusions.split(',').map((inc, i) => (
-                  <li key={i} className="flex items-center space-x-2 text-slate-300">
-                    <CheckCircle2 className="h-4.5 w-4.5 text-emerald-400 shrink-0" />
-                    <span>{inc}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400">Exclusions</h3>
-              <ul className="space-y-1.5 text-xs">
-                {pkg.exclusions.split(',').map((exc, i) => (
-                  <li key={i} className="flex items-center space-x-2 text-slate-300">
-                    <XCircle className="h-4.5 w-4.5 text-rose-400 shrink-0" />
-                    <span>{exc}</span>
-                  </li>
-                ))}
-              </ul>
+      {/* Grid of attraction cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+        {attractions.map((att, idx) => (
+          <div
+            key={idx}
+            onClick={() => handleCardClick(att.name)}
+            className="group relative h-48 rounded-2xl overflow-hidden border border-secondary/20 shadow-lg hover:border-secondary hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+          >
+            <img
+              src={att.image}
+              alt={att.name}
+              className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
+              <h3 className="text-sm sm:text-base font-extrabold text-white group-hover:text-secondary transition-colors">
+                {att.name}
+              </h3>
             </div>
           </div>
-
-          {/* Interactive Google Map Simulation */}
-          <div className="space-y-3 pt-6 border-t border-secondary/10">
-            <h3 className="text-xs font-bold uppercase text-secondary">Route Travel Locator</h3>
-            <div className="relative h-64 w-full rounded-2xl overflow-hidden border border-secondary/15 bg-slate-900 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] bg-[size:16px_16px]" />
-              <div className="z-10 flex flex-col items-center">
-                <MapPin className="h-8 w-8 text-rose-500 fill-rose-500/20" />
-                <span className="rounded bg-black border border-border/80 px-2.5 py-1 text-3xs font-bold text-white shadow-md mt-1">
-                  GPS Stop: {pkg.destination} route mapping
-                </span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Sidebar Enquiry & Bookings */}
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-secondary/20 bg-slate-900/30 p-6 shadow-md space-y-6">
-            <div>
-              <span className="text-4xs text-slate-400 block uppercase font-bold tracking-wider">Starts From</span>
-              <div className="flex items-baseline space-x-1">
-                <span className="text-2xl font-extrabold text-white">${pkg.price}</span>
-                <span className="text-xs text-slate-400">/ traveler</span>
-              </div>
-            </div>
-
-            <button
-              onClick={handleBookNow}
-              className="w-full rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-3 text-sm font-bold text-slate-950 shadow-md hover:brightness-110 active:scale-98 transition-all"
-            >
-              Book Now
-            </button>
-          </div>
-
-          {/* Enquiry lead form */}
-          <div className="rounded-2xl border border-secondary/20 bg-slate-900/30 p-5 space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center space-x-1">
-              <Mail className="h-4 w-4 text-secondary" />
-              <span>Inquire About Package</span>
-            </h4>
-            {inquirySuccess ? (
-              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-center text-xs text-emerald-400">
-                Inquiry submitted successfully!
-              </div>
-            ) : (
-              <form onSubmit={handleInquiry} className="space-y-3 text-xs">
-                <input
-                  type="text"
-                  required
-                  placeholder="Full Name"
-                  value={inquiryName}
-                  onChange={(e) => setInquiryName(e.target.value)}
-                  className="w-full rounded-lg border border-border/40 bg-background/50 px-3 py-2 text-foreground focus:outline-none"
-                />
-                <input
-                  type="email"
-                  required
-                  placeholder="Email Address"
-                  value={inquiryEmail}
-                  onChange={(e) => setInquiryEmail(e.target.value)}
-                  className="w-full rounded-lg border border-border/40 bg-background/50 px-3 py-2 text-foreground focus:outline-none"
-                />
-                <textarea
-                  required
-                  placeholder="Your message details..."
-                  value={inquiryMsg}
-                  onChange={(e) => setInquiryMsg(e.target.value)}
-                  className="w-full rounded-lg border border-border/40 bg-background/50 px-3 py-2 text-foreground focus:outline-none h-20 resize-none"
-                />
-                <button
-                  type="submit"
-                  disabled={inquiryLoading}
-                  className="w-full rounded-lg bg-secondary py-2 font-semibold text-slate-950 hover:brightness-115 disabled:opacity-50 transition-all"
-                >
-                  {inquiryLoading ? 'Submitting...' : 'Send Inquiry Message'}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-
-      </section>
-
-      {/* Modals */}
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <CheckoutModal isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} onSuccess={() => {}} />
+        ))}
+      </div>
 
     </div>
   );
