@@ -1,0 +1,89 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  role      String    @default("USER") // "USER" or "ADMIN"
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  reviews   Review[]
+}
+
+model TourPackage {
+  id              String    @id @default(uuid())
+  name            String
+  category        String    // "NATIONAL" or "INTERNATIONAL"
+  destination     String    // e.g. "Kashmir", "Dubai"
+  price           Float
+  durationDays    Int
+  bestSeason      String
+  attractions     String    // Comma-separated list of attractions
+  hotelDetails    String
+  mealPlan        String
+  transportation  String
+  itinerary       String    // JSON string array of day-wise plans
+  visaRequirement String    @default("Not Required")
+  currency        String    @default("INR")
+  weather         String    @default("Moderate")
+  inclusions      String    // Comma-separated list
+  exclusions      String    // Comma-separated list
+  rating          Float     @default(4.5)
+  availableDates  String    // JSON array of date strings
+  images          String    // JSON array of image URLs
+  active          Boolean   @default(true)
+  type            String    // "Adventure", "Family", "Honeymoon", "Solo", "Group", "Luxury", "Budget"
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+  reviews         Review[]
+  inquiries       Inquiry[]
+}
+
+model Booking {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId       String
+  package         TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  travelDate      DateTime
+  travelersCount  Int
+  roomType        String      // "Single", "Double", "Suite"
+  specialRequests String      @default("")
+  totalPrice      Float
+  status          String      @default("CONFIRMED") // "CONFIRMED", "CANCELLED"
+  paymentStatus   String      @default("PAID")      // "PENDING", "PAID", "FAILED"
+  invoiceId       String      @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Review {
+  id        String      @id @default(uuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packageId String
+  package   TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime    @default(now())
+}
+
+model Inquiry {
+  id        String      @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  packageId String
+  package   TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+}

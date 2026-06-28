@@ -39,7 +39,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark'); // dark mode by default for premium gold/navy look
   const [activeBooking, setActiveBookingState] = useState<PackageCheckoutDetails | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
   // Load state on mount
   useEffect(() => {
