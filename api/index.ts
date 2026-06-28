@@ -27,15 +27,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Register routes
+// Register routes (support both /api/ prefix and stripped/relative routes on Vercel)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/packages', packageRoutes);
+app.use('/packages', packageRoutes);
+
 app.use('/api/bookings', bookingRoutes);
+app.use('/bookings', bookingRoutes);
+
 app.use('/api/admin', adminRoutes);
+app.use('/admin', adminRoutes);
+
 app.use('/api/ai', aiRoutes);
+app.use('/ai', aiRoutes);
 
 // Health Check
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/health'], (req, res) => {
   res.json({ status: 'OK', timestamp: new Date(), environment: 'vercel-serverless' });
 });
 
