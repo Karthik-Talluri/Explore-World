@@ -44,9 +44,7 @@ export default function InternationalToursPage() {
   const router = useRouter();
 
   const handleCardClick = (name: string) => {
-    // Strip parenthetical text (e.g. "Dubai (UAE)" -> "Dubai") for database searches
-    const cleanName = name.split(' ')[0];
-    router.push(`/packages?destination=${encodeURIComponent(cleanName)}`);
+    router.push(`/international-tours/${encodeURIComponent(name)}`);
   };
 
   return (

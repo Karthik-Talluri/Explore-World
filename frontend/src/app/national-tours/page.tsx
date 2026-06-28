@@ -53,7 +53,7 @@ export default function NationalToursPage() {
   const router = useRouter();
 
   const handleCardClick = (name: string) => {
-    router.push(`/packages?destination=${encodeURIComponent(name)}`);
+    router.push(`/national-tours/${encodeURIComponent(name)}`);
   };
 
   return (
