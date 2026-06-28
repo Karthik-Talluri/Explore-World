@@ -4,6 +4,36 @@ import { authenticateJWT, AuthenticatedRequest } from '../middleware/auth.middle
 
 const router = Router();
 
+router.get("/", async (req, res) => {
+  try {
+    const packages = await prisma.tourPackage.findMany({
+      where: { active: true },
+      include: {
+        reviews: {
+          include: {
+            user: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: { price: "asc" }
+    });
+
+    const formatted = packages.map(p => ({
+      ...p,
+      images: JSON.parse(p.images),
+      itinerary: JSON.parse(p.itinerary),
+      availableDates: JSON.parse(p.availableDates),
+    }));
+
+    res.json(formatted);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Static high-quality images for seeding
 const TRAVEL_IMAGES = {
   NATIONAL: [
@@ -23,7 +53,7 @@ const TRAVEL_IMAGES = {
 // Helper to generate a realistic package dynamically if missing
 async function getOrCreateMockPackage(destName: string): Promise<any> {
   const normDest = destName.trim().toLowerCase();
-  
+
   let pkg: any = await prisma.tourPackage.findFirst({
     where: { destination: { contains: normDest } },
     include: { reviews: { include: { user: { select: { name: true } } } } }
@@ -31,12 +61,12 @@ async function getOrCreateMockPackage(destName: string): Promise<any> {
 
   if (!pkg) {
     const capDest = destName.charAt(0).toUpperCase() + destName.slice(1);
-    
+
     // Categorize
     const isInternational = [
-      'dubai', 'maldives', 'bali', 'singapore', 'thailand', 'malaysia', 'vietnam', 'indonesia', 'japan', 
-      'south korea', 'china', 'sri lanka', 'nepal', 'bhutan', 'turkey', 'switzerland', 'france', 'italy', 
-      'spain', 'greece', 'united kingdom', 'germany', 'norway', 'finland', 'iceland', 'australia', 
+      'dubai', 'maldives', 'bali', 'singapore', 'thailand', 'malaysia', 'vietnam', 'indonesia', 'japan',
+      'south korea', 'china', 'sri lanka', 'nepal', 'bhutan', 'turkey', 'switzerland', 'france', 'italy',
+      'spain', 'greece', 'united kingdom', 'germany', 'norway', 'finland', 'iceland', 'australia',
       'new zealand', 'canada', 'united states', 'mexico', 'egypt', 'south africa'
     ].includes(normDest);
 
@@ -97,7 +127,7 @@ async function getOrCreateMockPackage(destName: string): Promise<any> {
 router.get('/search', async (req, res) => {
   try {
     const { destination, category, type, maxPrice, maxDuration } = req.query;
-    
+
     const filters: any = { active: true };
 
     if (category) {
