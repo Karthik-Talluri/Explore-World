@@ -72,7 +72,7 @@ export default function AIAssistant() {
     setActiveBooking({
       packageId: pkg.id,
       name: pkg.name,
-      price: pkg.price,
+      price: pkg.price * 85, // Converted to INR
       availableDates: pkg.availableDates,
     });
     setIsCheckoutOpen(true);
@@ -167,7 +167,7 @@ export default function AIAssistant() {
                             onClick={() => handleBookPackage(pkg)}
                             className="flex items-center space-x-1 rounded-lg bg-secondary/15 hover:bg-secondary/25 px-2 py-1 text-2xs font-bold text-secondary transition-all"
                           >
-                            <span>${pkg.price}</span>
+                            <span>₹{(pkg.price * 85).toLocaleString('en-IN')}</span>
                             <ArrowRight className="h-3 w-3" />
                           </button>
                         </div>

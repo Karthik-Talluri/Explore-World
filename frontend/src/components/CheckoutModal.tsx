@@ -131,7 +131,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
             </div>
             <h3 className="text-xl font-bold text-foreground">Tour Package Reserved!</h3>
             <p className="text-sm text-muted-foreground px-4">
-              Your transaction of **${totalPrice.toFixed(2)}** was processed successfully.
+              Your transaction of **₹{totalPrice.toLocaleString('en-IN')}** was processed successfully.
               A booking confirmation has been logged to your account.
             </p>
             <div className="bg-muted p-3 rounded-xl inline-block border border-secondary/20">
@@ -153,9 +153,9 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
               </span>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-foreground">
-                  {activeBooking.name}
+                  {activeBooking.name} {activeBooking.durationDays ? `(${activeBooking.durationDays} Days)` : ''}
                 </span>
-                <span className="text-sm font-extrabold text-secondary">${basePrice} / traveler</span>
+                <span className="text-sm font-extrabold text-secondary">₹{basePrice.toLocaleString('en-IN')} / traveler</span>
               </div>
             </div>
 
@@ -301,7 +301,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
               <div className="border-t border-border mt-6 pt-4 flex items-center justify-between">
                 <div>
                   <span className="text-4xs text-muted-foreground uppercase tracking-wider block">Estimated Total</span>
-                  <span className="text-xl font-extrabold text-foreground">${totalPrice.toFixed(2)}</span>
+                  <span className="text-xl font-extrabold text-foreground">₹{totalPrice.toLocaleString('en-IN')}</span>
                 </div>
                 <button
                   type="submit"

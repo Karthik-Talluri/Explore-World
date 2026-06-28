@@ -73,13 +73,13 @@ export default function PackageDetailPage() {
     if (!pkg) return;
 
     const baseDuration = pkg.durationDays || 5;
-    const pricePerDay = Math.round(pkg.price / baseDuration);
+    const pricePerDay = Math.round((pkg.price * 85) / baseDuration);
     const pricePerPerson = pricePerDay * selectedDays;
 
     setActiveBooking({
       packageId: pkg.id,
       name: pkg.name,
-      price: pricePerPerson, // Customized price per traveler based on duration
+      price: pricePerPerson, // Carry customized INR price per traveler
       availableDates: ['2026-07-15', '2026-08-10', '2026-09-05'], // Fallback options
       travelersCount: numPersons, // Carry traveler count
       durationDays: selectedDays, // Carry selected duration
@@ -112,9 +112,9 @@ export default function PackageDetailPage() {
 
   const heroImg = pkg.images[0] || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200';
   
-  // Custom price calculations based on selected number of days
+  // Custom price calculations based on selected number of days (multiplied by 85 for INR conversion)
   const baseDuration = pkg.durationDays || 5;
-  const pricePerDay = Math.round(pkg.price / baseDuration);
+  const pricePerDay = Math.round((pkg.price * 85) / baseDuration);
   const pricePerPerson = pricePerDay * selectedDays;
   const totalPrice = pricePerPerson * numPersons;
 
@@ -235,10 +235,10 @@ export default function PackageDetailPage() {
             <div className="flex items-baseline justify-between border-t border-white/5 pt-4">
               <div>
                 <span className="text-4xs text-slate-400 uppercase tracking-widest block font-bold">Total Price</span>
-                <span className="text-3xl font-black text-secondary">${totalPrice.toLocaleString()}</span>
+                <span className="text-3xl font-black text-secondary">₹{totalPrice.toLocaleString('en-IN')}</span>
               </div>
               <span className="text-3xs text-slate-400 font-medium">
-                ${pricePerPerson.toLocaleString()} / person
+                ₹{pricePerPerson.toLocaleString('en-IN')} / person
               </span>
             </div>
 

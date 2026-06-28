@@ -34,7 +34,7 @@ function PackagesCatalogContent() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(searchParams.get('category') || null);
   const [typeFilter, setTypeFilter] = useState<string | null>(searchParams.get('type') || null);
 
-  const [maxPrice, setMaxPrice] = useState<number>(3000);
+  const [maxPrice, setMaxPrice] = useState<number>(250000);
   const [maxDuration, setMaxDuration] = useState<number>(10);
 
   // Data states
@@ -74,7 +74,7 @@ function PackagesCatalogContent() {
 
   // Filter listings client-side for immediate responsive sliders updates
   const filteredPackages = packages.filter((p) => {
-    if (p.price > maxPrice) return false;
+    if ((p.price * 85) > maxPrice) return false;
     if (p.durationDays > maxDuration) return false;
     return true;
   });
@@ -127,7 +127,7 @@ function PackagesCatalogContent() {
                 setCategoryFilter(null);
                 setTypeFilter(null);
                 setDestQuery('');
-                setMaxPrice(3000);
+                setMaxPrice(250000);
                 setMaxDuration(10);
                 router.push('/packages');
               }}
@@ -165,13 +165,13 @@ function PackagesCatalogContent() {
           <div className="space-y-2">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Max Price</span>
-              <span className="font-semibold text-foreground">${maxPrice}</span>
+              <span className="font-semibold text-foreground">₹{maxPrice.toLocaleString('en-IN')}</span>
             </div>
             <input
               type="range"
-              min="100"
-              max="4000"
-              step="50"
+              min="10000"
+              max="300000"
+              step="5000"
               value={maxPrice}
               onChange={(e) => setMaxPrice(Number(e.target.value))}
               className="w-full accent-secondary bg-muted rounded-lg h-1"
@@ -282,7 +282,7 @@ function PackagesCatalogContent() {
                       <div className="border-t border-border/20 pt-4 flex items-center justify-between">
                         <div>
                           <span className="text-4xs text-muted-foreground block uppercase font-bold">Starts At</span>
-                          <span className="text-base font-extrabold text-foreground">${pkg.price} <span className="text-4xs text-muted-foreground font-normal">/ person</span></span>
+                          <span className="text-base font-extrabold text-foreground">₹{(pkg.price * 85).toLocaleString('en-IN')} <span className="text-4xs text-muted-foreground font-normal">/ person</span></span>
                         </div>
                         <Link
                           href={`/packages/${pkg.id}`}

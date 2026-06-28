@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
                     {/* Pricing & Invoices */}
                     <div className="border-t border-border/20 pt-3 flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-foreground">${booking.totalPrice}</span>
+                      <span className="text-sm font-extrabold text-foreground">₹{booking.totalPrice.toLocaleString('en-IN')}</span>
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setSelectedInvoice(booking)}
@@ -217,12 +217,12 @@ export default function DashboardPage() {
                 {[
                   {
                     name: 'Kashmir Paradise Valley Tour',
-                    price: '$499/person',
+                    price: '₹42,415/person',
                     image: 'https://images.unsplash.com/photo-1566837945700-30057527ade0?w=200',
                   },
                   {
                     name: 'Maldives Overwater Pool Villa Getaway',
-                    price: '$1899/person',
+                    price: '₹161,415/person',
                     image: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=200',
                   },
                 ].map((wish, idx) => (
@@ -310,11 +310,11 @@ export default function DashboardPage() {
               <div className="border-t border-dashed border-border/80 my-3" />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Base Billed Item</span>
-                <span className="font-semibold text-foreground">${selectedInvoice.package.price} / person</span>
+                <span className="font-semibold text-foreground">₹{(selectedInvoice.package.price * 85).toLocaleString('en-IN')} / person</span>
               </div>
               <div className="flex justify-between font-bold text-sm">
                 <span className="text-foreground">Total Price Charged</span>
-                <span className="text-secondary">${selectedInvoice.totalPrice}</span>
+                <span className="text-secondary">₹{selectedInvoice.totalPrice.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
