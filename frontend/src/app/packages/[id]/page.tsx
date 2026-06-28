@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { Clock, Users, ArrowLeft, ShieldCheck, Compass, Check } from 'lucide-react';
+import { Clock, Users, ArrowLeft, ShieldCheck, Compass, Check, Calendar } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import CheckoutModal from '@/components/CheckoutModal';
 
@@ -35,8 +35,9 @@ export default function PackageDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Counter state
+  // Counter states
   const [numPersons, setNumPersons] = useState(1);
+  const [selectedDays, setSelectedDays] = useState(5);
 
   // Modals state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -51,6 +52,7 @@ export default function PackageDetailPage() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to load package details');
         setPkg(data);
+        setSelectedDays(data.durationDays);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -69,12 +71,18 @@ export default function PackageDetailPage() {
       return;
     }
     if (!pkg) return;
+
+    const baseDuration = pkg.durationDays || 5;
+    const pricePerDay = Math.round(pkg.price / baseDuration);
+    const pricePerPerson = pricePerDay * selectedDays;
+
     setActiveBooking({
       packageId: pkg.id,
       name: pkg.name,
-      price: pkg.price,
+      price: pricePerPerson, // Customized price per traveler based on duration
       availableDates: ['2026-07-15', '2026-08-10', '2026-09-05'], // Fallback options
       travelersCount: numPersons, // Carry traveler count
+      durationDays: selectedDays, // Carry selected duration
     });
     setIsCheckoutOpen(true);
   };
@@ -103,7 +111,12 @@ export default function PackageDetailPage() {
   }
 
   const heroImg = pkg.images[0] || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200';
-  const totalPrice = pkg.price * numPersons;
+  
+  // Custom price calculations based on selected number of days
+  const baseDuration = pkg.durationDays || 5;
+  const pricePerDay = Math.round(pkg.price / baseDuration);
+  const pricePerPerson = pricePerDay * selectedDays;
+  const totalPrice = pricePerPerson * numPersons;
 
   return (
     <div className="mx-auto max-w-4xl w-full px-4 py-28 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-center">
@@ -123,7 +136,7 @@ export default function PackageDetailPage() {
       <div className="bg-slate-900/40 backdrop-blur-md border border-white/10 rounded-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-2">
         
         {/* Left Side: Destination Image */}
-        <div className="relative h-64 md:h-full min-h-[300px]">
+        <div className="relative h-64 md:h-full min-h-[350px]">
           <img
             src={heroImg}
             alt={pkg.name}
@@ -132,9 +145,9 @@ export default function PackageDetailPage() {
           <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-slate-950/80 via-slate-950/20 to-transparent" />
           
           {/* Floating Duration Badge */}
-          <div className="absolute top-6 left-6 bg-slate-950/75 backdrop-blur-sm border border-white/10 px-4 py-2 rounded-xl flex items-center space-x-2 text-xs font-bold">
+          <div className="absolute top-6 left-6 bg-slate-950/75 backdrop-blur-sm border border-white/10 px-4 py-2 rounded-xl flex items-center space-x-2 text-xs font-bold shadow-lg">
             <Clock className="h-4 w-4 text-secondary" />
-            <span>{pkg.durationDays} Days / {pkg.durationDays - 1} Nights</span>
+            <span>{selectedDays} Days / {selectedDays - 1} Nights</span>
           </div>
         </div>
 
@@ -164,28 +177,58 @@ export default function PackageDetailPage() {
           </div>
 
           <div className="space-y-6 border-t border-white/5 pt-6">
-            {/* Number of Persons Selector */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-slate-400" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Travelers</span>
-              </div>
+            
+            {/* Interactive Selectors */}
+            <div className="space-y-4">
               
-              <div className="flex items-center space-x-3 bg-slate-950 border border-white/10 rounded-xl p-1">
-                <button
-                  onClick={() => setNumPersons(prev => Math.max(1, prev - 1))}
-                  className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold"
-                >
-                  -
-                </button>
-                <span className="text-sm font-black text-white px-2 w-4 text-center">{numPersons}</span>
-                <button
-                  onClick={() => setNumPersons(prev => Math.min(10, prev + 1))}
-                  className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold"
-                >
-                  +
-                </button>
+              {/* Duration Selector */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-4 w-4 text-slate-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Duration (Days)</span>
+                </div>
+                
+                <div className="flex items-center space-x-3 bg-slate-950 border border-white/10 rounded-xl p-1">
+                  <button
+                    onClick={() => setSelectedDays(prev => Math.max(3, prev - 1))}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold"
+                  >
+                    -
+                  </button>
+                  <span className="text-sm font-black text-white px-2 w-4 text-center">{selectedDays}</span>
+                  <button
+                    onClick={() => setSelectedDays(prev => Math.min(15, prev + 1))}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
+
+              {/* Number of Persons Selector */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-4 w-4 text-slate-400" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Travelers</span>
+                </div>
+                
+                <div className="flex items-center space-x-3 bg-slate-950 border border-white/10 rounded-xl p-1">
+                  <button
+                    onClick={() => setNumPersons(prev => Math.max(1, prev - 1))}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold"
+                  >
+                    -
+                  </button>
+                  <span className="text-sm font-black text-white px-2 w-4 text-center">{numPersons}</span>
+                  <button
+                    onClick={() => setNumPersons(prev => Math.min(10, prev + 1))}
+                    className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5 transition-colors font-bold"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
             </div>
 
             {/* Price Calculations */}
@@ -195,7 +238,7 @@ export default function PackageDetailPage() {
                 <span className="text-3xl font-black text-secondary">${totalPrice.toLocaleString()}</span>
               </div>
               <span className="text-3xs text-slate-400 font-medium">
-                ${pkg.price.toLocaleString()} / person
+                ${pricePerPerson.toLocaleString()} / person
               </span>
             </div>
 
