@@ -179,7 +179,8 @@ router.get('/search', async (req, res) => {
       message: "Internal server error",
       error: String(error)
     });
-  });
+  }
+});
 
 // Get package by ID
 router.get('/:id', async (req, res) => {

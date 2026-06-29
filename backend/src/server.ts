@@ -43,31 +43,37 @@ app.get('/api/health', (req, res) => {
 // Self-seeding database function for development ease
 async function seedDatabase() {
   try {
-    const userCount = await prisma.user.count();
-    if (userCount === 0) {
+    const packageCount = await prisma.tourPackage.count();
+    if (packageCount === 0) {
       console.log('Database empty. Seeding initial users, coupons and holiday packages...');
 
-      // Seed admin
-      const hashedAdminPassword = await bcrypt.hash('admin123', 10);
-      await prisma.user.create({
-        data: {
-          email: 'admin@exploreworld.com',
-          name: 'Explore Admin',
-          password: hashedAdminPassword,
-          role: 'ADMIN',
-        },
-      });
+      // Seed admin if missing
+      const adminExists = await prisma.user.findUnique({ where: { email: 'admin@exploreworld.com' } });
+      if (!adminExists) {
+        const hashedAdminPassword = await bcrypt.hash('admin123', 10);
+        await prisma.user.create({
+          data: {
+            email: 'admin@exploreworld.com',
+            name: 'Explore Admin',
+            password: hashedAdminPassword,
+            role: 'ADMIN',
+          },
+        });
+      }
 
-      // Seed normal user
-      const hashedUserPassword = await bcrypt.hash('user123', 10);
-      await prisma.user.create({
-        data: {
-          email: 'user@exploreworld.com',
-          name: 'Jane Doe',
-          password: hashedUserPassword,
-          role: 'USER',
-        },
-      });
+      // Seed normal user if missing
+      const userExists = await prisma.user.findUnique({ where: { email: 'user@exploreworld.com' } });
+      if (!userExists) {
+        const hashedUserPassword = await bcrypt.hash('user123', 10);
+        await prisma.user.create({
+          data: {
+            email: 'user@exploreworld.com',
+            name: 'Jane Doe',
+            password: hashedUserPassword,
+            role: 'USER',
+          },
+        });
+      }
 
       // Seed Initial Tour Packages
       const initialPackages = [
