@@ -173,10 +173,13 @@ router.get('/search', async (req, res) => {
 
     return res.json(formatted);
   } catch (error) {
-    console.error('Search packages error:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
-});
+    console.error("FULL ERROR:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+      error: String(error)
+    });
+  });
 
 // Get package by ID
 router.get('/:id', async (req, res) => {
