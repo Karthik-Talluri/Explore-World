@@ -53,8 +53,8 @@ let isSeeded = false;
 async function seedDatabase() {
   if (isSeeded) return;
   try {
-    const userCount = await prisma.user.count();
-    if (userCount === 0) {
+    const packageCount = await prisma.tourPackage.count();
+    if (packageCount === 0) {
       console.log('Database empty. Seeding initial users and holiday packages...');
 
       // Seed admin
