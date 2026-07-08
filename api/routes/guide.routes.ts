@@ -10,18 +10,25 @@ router.use(authenticateJWT);
 // Helper to check if user is a tour guide and return the guide profile
 const getTourGuideProfile = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id;
+  const userRole = req.user?.role;
+
   if (!userId) {
     res.status(401).json({ message: 'Unauthorized' });
     return null;
   }
 
+  if (userRole !== 'GUIDE') {
+    res.status(403).json({ message: 'Forbidden: Guide access required' });
+    return null;
+  }
+
   const guide = await prisma.tourGuide.findUnique({
     where: { userId },
-    include: { user: { select: { name: true, email: true } } },
+    include: { user: { select: { name: true, email: true, role: true } } },
   });
 
   if (!guide) {
-    res.status(403).json({ message: 'Forbidden: Tour Guide profile not found' });
+    res.status(403).json({ message: 'Forbidden: Guide profile not found' });
     return null;
   }
 
