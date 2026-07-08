@@ -26,89 +26,97 @@ export default function Navbar() {
     }
   };
 
+  const handleExitPortal = () => {
+    sessionStorage.removeItem('explore_world_role');
+    window.dispatchEvent(new Event('explore-world-role-changed'));
+    router.push('/');
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 w-full border-b border-border/40 bg-slate-950/85 backdrop-blur-md transition-colors duration-300">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2 text-primary font-bold text-xl">
-              <Compass className="h-6 w-6 text-secondary animate-spin-slow" />
+          {/* Logo Brand */}
+          <div className="flex items-center space-x-8">
+            <Link className="flex items-center space-x-2 text-primary font-bold text-lg" href="/">
+              <Compass className="h-7 w-7 text-secondary animate-spin-slow" />
               <span className="bg-gradient-to-r from-secondary via-amber-300 to-secondary bg-clip-text text-transparent font-black tracking-wide">
                 Explore World
               </span>
             </Link>
-          </div>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/"
-              className={`text-sm font-semibold transition-colors duration-200 ${
-                isActive('/') ? 'text-secondary' : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              Home
-            </Link>
-            <Link
-              href="/national-tours"
-              className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-            >
-              National Tours
-            </Link>
-            <Link
-              href="/international-tours"
-              className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-            >
-              International Tours
-            </Link>
-            {user?.role === 'ADMIN' && (
+            {/* Central Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
               <Link
-                href="/admin"
+                href="/packages"
                 className={`text-sm font-semibold transition-colors duration-200 ${
-                  isActive('/admin') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                  isActive('/packages') ? 'text-secondary' : 'text-slate-300 hover:text-white'
                 }`}
               >
-                Admin Panel
+                Packages
               </Link>
-            )}
-            {(user?.role === 'GUIDE' || user?.role === 'TOUR_GUIDE') && (
               <Link
-                href="/guide"
+                href="/national-tours"
                 className={`text-sm font-semibold transition-colors duration-200 ${
-                  isActive('/guide') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                  isActive('/national-tours') ? 'text-secondary' : 'text-slate-300 hover:text-white'
                 }`}
               >
-                Guide Dashboard
+                National Tours
               </Link>
-            )}
-            {user?.role === 'USER' && (
               <Link
-                href="/dashboard"
+                href="/international-tours"
                 className={`text-sm font-semibold transition-colors duration-200 ${
-                  isActive('/dashboard') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                  isActive('/international-tours') ? 'text-secondary' : 'text-slate-300 hover:text-white'
                 }`}
               >
-                My Dashboard
+                International Tours
               </Link>
-            )}
-            <button
-              onClick={() => handleNavClick('#about-us')}
-              className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-            >
-              About Us
-            </button>
-            <button
-              onClick={() => handleNavClick('#contact-us')}
-              className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
-            >
-              Contact Us
-            </button>
+              {(user?.role === 'GUIDE' || user?.role === 'TOUR_GUIDE') && (
+                <Link
+                  href="/guide"
+                  className={`text-sm font-semibold transition-colors duration-200 ${
+                    isActive('/guide') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  Guide Dashboard
+                </Link>
+              )}
+              {user?.role === 'USER' && (
+                <Link
+                  href="/dashboard"
+                  className={`text-sm font-semibold transition-colors duration-200 ${
+                    isActive('/dashboard') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                  }`}
+                >
+                  My Dashboard
+                </Link>
+              )}
+              <button
+                onClick={() => handleNavClick('#about-us')}
+                className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+              >
+                About Us
+              </button>
+              <button
+                onClick={() => handleNavClick('#contact-us')}
+                className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+              >
+                Contact Us
+              </button>
+            </div>
           </div>
 
           {/* Right Action Menu */}
           <div className="flex items-center space-x-4">
+            {/* Exit Portal Button */}
+            <button
+              onClick={handleExitPortal}
+              className="text-[10px] uppercase font-bold text-slate-400 hover:text-white px-2.5 py-1.5 rounded-xl border border-white/5 bg-slate-900/50 hover:bg-slate-900 transition-all duration-200"
+            >
+              Exit Portal
+            </button>
+
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
