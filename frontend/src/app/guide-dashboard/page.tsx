@@ -89,7 +89,7 @@ export default function GuideDashboard() {
       router.push('/guide-login');
       return;
     }
-    if (user.role !== 'GUIDE') {
+    if (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE') {
       router.push('/dashboard'); // Redirect travellers to customer dashboard
     }
   }, [token, user]);
@@ -115,7 +115,7 @@ export default function GuideDashboard() {
   };
 
   useEffect(() => {
-    if (token && user && user.role === 'GUIDE') {
+    if (token && user && (user.role === 'GUIDE' || user.role === 'TOUR_GUIDE')) {
       fetchDashboardData();
     }
   }, [token, user]);
@@ -223,7 +223,7 @@ export default function GuideDashboard() {
   };
 
   // Prevent layout flicker while checking auth
-  if (!token || !user || user.role !== 'GUIDE') {
+  if (!token || !user || (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE')) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-950 text-white font-sans">
         <div className="text-center space-y-4">

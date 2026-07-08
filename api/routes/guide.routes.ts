@@ -17,7 +17,7 @@ const getTourGuideProfile = async (req: AuthenticatedRequest, res: Response) => 
     return null;
   }
 
-  if (userRole !== 'GUIDE') {
+  if (userRole !== 'GUIDE' && userRole !== 'TOUR_GUIDE') {
     res.status(403).json({ message: 'Forbidden: Guide access required' });
     return null;
   }

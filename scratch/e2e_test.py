@@ -2,6 +2,7 @@ import urllib.request
 import json
 import time
 import ssl
+import datetime
 
 BASE_URL = "https://explore-world-inky.vercel.app"
 
@@ -49,15 +50,19 @@ def run_test():
     if status != 200:
         print(f"Failed to load packages: {status} - {pkgs}")
         return
-    kashmir_pkg = next(p for p in pkgs if "kashmir" in p["name"].lower())
+    kashmir_pkg = next(p for p in pkgs if "jammu" in p["name"].lower() or "kashmir" in p["name"].lower())
     kashmir_pkg_id = kashmir_pkg["id"]
     print(f"Found Kashmir package ID: {kashmir_pkg_id}")
+
+    # Generate a dynamic travel date 2 days in the future to avoid scheduling overlaps
+    travel_date = (datetime.date.today() + datetime.timedelta(days=2)).isoformat()
+    print(f"Dynamic travel date generated: {travel_date}")
 
     # Step 2: Book Kashmir Tour
     print("\n2. Booking Kashmir Tour package...")
     booking_payload = {
         "packageId": kashmir_pkg_id,
-        "travelDate": "2026-07-15",
+        "travelDate": travel_date,
         "travelersCount": 2,
         "roomType": "Suite",
         "specialRequests": "E2E Automated test run",

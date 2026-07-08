@@ -20,12 +20,12 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
       const isGuideRoute = pathname.startsWith('/guide-dashboard') || pathname.startsWith('/guide-login');
       
       // 1. Guide users must never see traveller pages after login
-      if (user.role === 'GUIDE' && !isGuideRoute) {
+      if ((user.role === 'GUIDE' || user.role === 'TOUR_GUIDE') && !isGuideRoute) {
         router.push('/guide-dashboard');
       }
       
       // 2. Traveller users must never access guide pages
-      if (user.role !== 'GUIDE' && pathname.startsWith('/guide-dashboard')) {
+      if (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' && pathname.startsWith('/guide-dashboard')) {
         router.push('/dashboard');
       }
     }

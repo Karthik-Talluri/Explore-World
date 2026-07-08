@@ -14,10 +14,10 @@ export default function GuideLoginPage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  // If already authenticated as GUIDE, redirect straight to guide-dashboard
+  // If already authenticated as GUIDE or TOUR_GUIDE, redirect straight to guide-dashboard
   useEffect(() => {
     if (token && user) {
-      if (user.role === 'GUIDE') {
+      if (user.role === 'GUIDE' || user.role === 'TOUR_GUIDE') {
         router.push('/guide-dashboard');
       }
     }
@@ -43,7 +43,7 @@ export default function GuideLoginPage() {
         throw new Error(data.message || 'Login failed. Please verify your credentials.');
       }
 
-      if (data.user.role !== 'GUIDE') {
+      if (data.user.role !== 'GUIDE' && data.user.role !== 'TOUR_GUIDE') {
         throw new Error('Only Tour Guide accounts are permitted to sign in here.');
       }
 
@@ -64,7 +64,7 @@ export default function GuideLoginPage() {
 
       <div className="relative w-full max-w-md space-y-8 z-10">
         
-        {user && user.role !== 'GUIDE' ? (
+        {user && user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' ? (
           <div className="rounded-3xl border border-rose-500/20 p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-6 text-center">
             <ShieldAlert className="h-14 w-14 text-rose-500 mx-auto animate-pulse" />
             <div className="space-y-2">
