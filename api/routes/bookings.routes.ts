@@ -69,11 +69,13 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
         }
       });
 
-      // Filter guides specializing in this destination
+      // Filter guides specializing in this destination (handling partial matches like Kashmir vs Jammu and Kashmir)
       const matchedGuides = guides.filter((g) => {
         const specList = g.specialization.toLowerCase().split(',').map(s => s.trim());
         const dest = pkg.destination.toLowerCase();
-        return specList.includes(dest) || g.specialization.toLowerCase().includes(dest);
+        return specList.some(spec => dest.includes(spec) || spec.includes(dest)) ||
+               g.specialization.toLowerCase().includes(dest) ||
+               dest.includes(g.specialization.toLowerCase());
       });
 
       // Filter out guides who already have an active tour on this date

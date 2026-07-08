@@ -280,10 +280,12 @@ async function assignNextGuide(bookingId: string) {
       // Exclude guides who already rejected
       if (rejectedGuideIds.includes(g.id)) return false;
 
-      // Specialization check
+      // Specialization check (handling partial matches like Kashmir vs Jammu and Kashmir)
       const specList = g.specialization.toLowerCase().split(',').map(s => s.trim());
       const dest = pkg.destination.toLowerCase();
-      const matchesDest = specList.includes(dest) || g.specialization.toLowerCase().includes(dest);
+      const matchesDest = specList.some(spec => dest.includes(spec) || spec.includes(dest)) ||
+                          g.specialization.toLowerCase().includes(dest) ||
+                          dest.includes(g.specialization.toLowerCase());
       if (!matchesDest) return false;
 
       // Overlapping booking check on same date
