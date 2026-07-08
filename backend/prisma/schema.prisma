@@ -61,6 +61,7 @@ model Booking {
   roomType        String      // "Single", "Double", "Suite"
   specialRequests String      @default("")
   pickupLocation  String      @default("Hotel Lobby / Airport")
+  contactNumber   String      @default("+1-555-0199")
   totalPrice      Float
   status          String      @default("CONFIRMED") // "CONFIRMED", "CANCELLED"
   paymentStatus   String      @default("PAID")      // "PENDING", "PAID", "FAILED"

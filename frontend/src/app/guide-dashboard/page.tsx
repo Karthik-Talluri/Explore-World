@@ -5,13 +5,14 @@ import { useApp } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
 import { 
   Compass, ShieldAlert, Calendar, DollarSign, CheckCircle2, XCircle, 
-  Clock, User, MapPin, Users, Star, Award, History, ClipboardCheck, MessageSquare 
+  Clock, User, MapPin, Users, Star, Award, History, ClipboardCheck, 
+  MessageSquare, ExternalLink, Send, X, Phone
 } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 
 interface Assignment {
   id: string;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED';
+  status: 'PENDING' | 'ACCEPTED' | 'STARTED' | 'REJECTED' | 'COMPLETED';
   rating?: number | null;
   feedback?: string | null;
   createdAt: string;
@@ -22,6 +23,7 @@ interface Assignment {
     roomType: string;
     specialRequests: string;
     pickupLocation: string;
+    contactNumber: string;
     totalPrice: number;
     status: string;
     invoiceId: string;
@@ -72,6 +74,11 @@ export default function GuideDashboard() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Chat Panel states
+  const [activeChat, setActiveChat] = useState<Assignment | null>(null);
+  const [chatMessages, setChatMessages] = useState<{[key: string]: { sender: 'guide' | 'customer', text: string, time: string }[]}>({});
+  const [newMessage, setNewMessage] = useState('');
+
   const fetchDashboardData = async () => {
     if (!token) return;
     setLoading(true);
@@ -94,7 +101,7 @@ export default function GuideDashboard() {
 
   useEffect(() => {
     if (token && user) {
-      if (user.role !== 'TOUR_GUIDE') {
+      if (user.role !== 'GUIDE') {
         router.push('/');
       } else {
         fetchDashboardData();
@@ -102,7 +109,7 @@ export default function GuideDashboard() {
     }
   }, [token, user]);
 
-  const handleUpdateStatus = async (assignmentId: string, newStatus: 'ACCEPTED' | 'REJECTED' | 'COMPLETED') => {
+  const handleUpdateStatus = async (assignmentId: string, newStatus: 'ACCEPTED' | 'REJECTED' | 'STARTED' | 'COMPLETED') => {
     if (!token) return;
     setActionLoading(assignmentId);
     try {
@@ -118,13 +125,60 @@ export default function GuideDashboard() {
       const resData = await res.json();
       if (!res.ok) throw new Error(resData.message || 'Failed to update assignment');
 
-      alert(`Tour booking marked as ${newStatus.toLowerCase()} successfully.`);
+      alert(`Tour booking status updated to ${newStatus.toLowerCase()} successfully.`);
       fetchDashboardData();
     } catch (err: any) {
       alert(err.message);
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // Chat message helpers
+  const getInitialMessages = (asg: Assignment) => [
+    { sender: 'customer' as const, text: `Hello! I am ${asg.booking.user.name}. Can we confirm the pickup location?`, time: '9:02 AM' },
+    { sender: 'guide' as const, text: `Hi ${asg.booking.user.name}! I will meet you at the ${asg.booking.pickupLocation} as scheduled.`, time: '9:05 AM' },
+    { sender: 'customer' as const, text: `Perfect! My contact number is ${asg.booking.contactNumber} in case you need to call.`, time: '9:08 AM' },
+  ];
+
+  const handleOpenChat = (asg: Assignment) => {
+    setActiveChat(asg);
+    if (!chatMessages[asg.id]) {
+      setChatMessages(prev => ({
+        ...prev,
+        [asg.id]: getInitialMessages(asg)
+      }));
+    }
+  };
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activeChat) return;
+
+    const userMsg = {
+      sender: 'guide' as const,
+      text: newMessage.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatMessages(prev => ({
+      ...prev,
+      [activeChat.id]: [...(prev[activeChat.id] || []), userMsg]
+    }));
+    setNewMessage('');
+
+    // Trigger mock automatic reply
+    setTimeout(() => {
+      const reply = {
+        sender: 'customer' as const,
+        text: "Thanks for the update! Looking forward to starting the tour.",
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setChatMessages(prev => ({
+        ...prev,
+        [activeChat.id]: [...(prev[activeChat.id] || []), reply]
+      }));
+    }, 1500);
   };
 
   if (!token) {
@@ -173,7 +227,7 @@ export default function GuideDashboard() {
   }
 
   const pendingAssignments = data.assignments.filter(a => a.status === 'PENDING');
-  const activeAssignments = data.assignments.filter(a => a.status === 'ACCEPTED');
+  const activeAssignments = data.assignments.filter(a => ['ACCEPTED', 'STARTED'].includes(a.status));
   const historyAssignments = data.assignments.filter(a => ['COMPLETED', 'REJECTED'].includes(a.status));
   const ratings = data.assignments.filter(a => a.rating !== null && a.rating !== undefined);
 
@@ -231,12 +285,12 @@ export default function GuideDashboard() {
           <div className="space-y-4">
             <h2 className="text-md font-bold text-foreground flex items-center space-x-1.5 uppercase tracking-wider">
               <Clock className="h-4.5 w-4.5 text-secondary" />
-              <span>Pending Assignments Requests</span>
+              <span>Pending Tour Requests</span>
             </h2>
 
             {pendingAssignments.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                No new guide assignment requests pending at this time.
+                No new guide assignment requests pending.
               </div>
             ) : (
               <div className="space-y-4">
@@ -245,17 +299,20 @@ export default function GuideDashboard() {
                     <div className="flex justify-between items-center border-b border-border/20 pb-3">
                       <div>
                         <span className="text-xs font-black text-foreground block">{asg.booking.package.name}</span>
-                        <span className="text-4xs text-muted-foreground block font-mono">Invoice Reference: {asg.booking.invoiceId}</span>
+                        <span className="text-4xs text-slate-500 block font-mono">INV: {asg.booking.invoiceId}</span>
                       </div>
                       <span className="text-3xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded">
-                        Action Required
+                        Pending Accept
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 text-xs text-muted-foreground">
                       <div>
                         <p>Customer: <strong className="text-foreground">{asg.booking.user.name}</strong></p>
-                        <p className="text-3xs">{asg.booking.user.email}</p>
+                        <p className="text-3xs flex items-center space-x-1 mt-0.5">
+                          <Phone className="h-3 w-3 text-slate-500" />
+                          <span>{asg.booking.contactNumber}</span>
+                        </p>
                       </div>
                       <div>
                         <p>Travelers: <strong className="text-foreground">{asg.booking.travelersCount} Adults</strong></p>
@@ -263,7 +320,7 @@ export default function GuideDashboard() {
                       </div>
                       <div className="col-span-2 flex items-start space-x-1 text-3xs border-t border-border/20 pt-2">
                         <MapPin className="h-3 w-3 text-secondary shrink-0 mt-0.5" />
-                        <p>Pickup Point: <strong className="text-foreground">{asg.booking.pickupLocation}</strong></p>
+                        <p>Pickup: <strong className="text-foreground">{asg.booking.pickupLocation}</strong></p>
                       </div>
                     </div>
 
@@ -280,7 +337,7 @@ export default function GuideDashboard() {
                         disabled={actionLoading === asg.id}
                         className="flex-1 rounded-xl border border-destructive/20 hover:bg-destructive/10 py-2 text-2xs font-bold text-destructive disabled:opacity-50"
                       >
-                        Reject Request
+                        Reject
                       </button>
                     </div>
                   </div>
@@ -309,8 +366,12 @@ export default function GuideDashboard() {
                         <span className="text-xs font-black text-foreground block">{asg.booking.package.name}</span>
                         <span className="text-4xs text-muted-foreground block font-mono">Invoice Reference: {asg.booking.invoiceId}</span>
                       </div>
-                      <span className="text-3xs font-bold bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 py-0.5 rounded">
-                        Active Assignment
+                      <span className={`text-3xs font-bold border px-2 py-0.5 rounded ${
+                        asg.status === 'STARTED'
+                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                          : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                      }`}>
+                        {asg.status === 'STARTED' ? 'Tour Running' : 'Accepted'}
                       </span>
                     </div>
 
@@ -319,7 +380,10 @@ export default function GuideDashboard() {
                       <div className="space-y-1">
                         <span className="text-4xs font-bold uppercase tracking-wider text-muted-foreground block">Customer Details</span>
                         <p className="font-semibold text-foreground">{asg.booking.user.name}</p>
-                        <p className="text-3xs">{asg.booking.user.email}</p>
+                        <p className="text-3xs flex items-center space-x-1 font-mono">
+                          <Phone className="h-3 w-3 text-secondary" />
+                          <span>{asg.booking.contactNumber}</span>
+                        </p>
                         <p className="text-3xs flex items-center space-x-1 mt-1">
                           <Users className="h-3 w-3 text-secondary" />
                           <span>{asg.booking.travelersCount} Travelers • {asg.booking.roomType} Room</span>
@@ -327,9 +391,8 @@ export default function GuideDashboard() {
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-4xs font-bold uppercase tracking-wider text-muted-foreground block">Package Core Inclusions</span>
+                        <span className="text-4xs font-bold uppercase tracking-wider text-muted-foreground block">Inclusions & Logistics</span>
                         <p className="text-3xs text-foreground">🏨 Hotel: {asg.booking.package.hotelDetails}</p>
-                        <p className="text-3xs text-foreground">🍽️ Meals: {asg.booking.package.mealPlan}</p>
                         <p className="text-3xs text-foreground">🚐 Transport: {asg.booking.package.transportation}</p>
                       </div>
 
@@ -337,14 +400,14 @@ export default function GuideDashboard() {
                         <div className="flex items-start space-x-1">
                           <Calendar className="h-3.5 w-3.5 text-secondary shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-muted-foreground block">Travel Date</span>
+                            <span className="text-slate-500 block font-semibold uppercase tracking-wider">Tour Date</span>
                             <strong className="text-foreground text-2xs">{new Date(asg.booking.travelDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
                           </div>
                         </div>
                         <div className="flex items-start space-x-1">
                           <MapPin className="h-3.5 w-3.5 text-secondary shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-muted-foreground block">Pickup Location</span>
+                            <span className="text-slate-500 block font-semibold uppercase tracking-wider">Pickup Location</span>
                             <strong className="text-foreground text-2xs">{asg.booking.pickupLocation}</strong>
                           </div>
                         </div>
@@ -358,14 +421,50 @@ export default function GuideDashboard() {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => handleUpdateStatus(asg.id, 'COMPLETED')}
-                      disabled={actionLoading === asg.id}
-                      className="w-full rounded-xl bg-emerald-500 py-2.5 text-2xs font-bold text-white shadow hover:brightness-110 disabled:opacity-50 flex items-center justify-center space-x-1"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Complete Tour Package</span>
-                    </button>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border/20">
+                      
+                      {/* Start / Complete Actions */}
+                      {asg.status === 'ACCEPTED' ? (
+                        <button
+                          onClick={() => handleUpdateStatus(asg.id, 'STARTED')}
+                          disabled={actionLoading === asg.id}
+                          className="col-span-2 rounded-xl bg-gradient-to-r from-secondary to-amber-500 hover:brightness-110 py-2.5 text-2xs font-bold text-slate-950 shadow flex items-center justify-center space-x-1 disabled:opacity-50"
+                        >
+                          <Compass className="h-3.5 w-3.5 animate-spin-slow" />
+                          <span>Start Tour</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleUpdateStatus(asg.id, 'COMPLETED')}
+                          disabled={actionLoading === asg.id}
+                          className="col-span-2 rounded-xl bg-emerald-500 hover:brightness-110 py-2.5 text-2xs font-bold text-white shadow flex items-center justify-center space-x-1 disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>Complete Tour</span>
+                        </button>
+                      )}
+
+                      {/* Google Maps Button */}
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(asg.booking.pickupLocation)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-white/10 bg-slate-900/60 hover:bg-slate-950 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1"
+                      >
+                        <MapPin className="h-3.5 w-3.5 text-rose-500" />
+                        <span>Google Maps</span>
+                      </a>
+
+                      {/* Chat Button */}
+                      <button
+                        onClick={() => handleOpenChat(asg)}
+                        className="rounded-xl border border-white/10 bg-slate-900/60 hover:bg-slate-950 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5 text-secondary animate-pulse" />
+                        <span>Chat</span>
+                      </button>
+
+                    </div>
                   </div>
                 ))}
               </div>
@@ -491,6 +590,74 @@ export default function GuideDashboard() {
         </div>
 
       </div>
+
+      {/* CUSTOMER CHAT DIALOG */}
+      {activeChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 p-5 shadow-2xl flex flex-col h-[500px] text-xs">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-border/20 pb-3.5 mb-3.5">
+              <div className="flex items-center space-x-2.5">
+                <div className="rounded-full bg-secondary/10 p-2 text-secondary">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">{activeChat.booking.user.name}</h3>
+                  <span className="text-3xs text-secondary font-semibold">Contact: {activeChat.booking.contactNumber}</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveChat(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Message List */}
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 mb-4">
+              {(chatMessages[activeChat.id] || []).map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex flex-col max-w-[80%] ${
+                    msg.sender === 'guide' ? 'ml-auto items-end' : 'mr-auto items-start'
+                  }`}
+                >
+                  <div
+                    className={`rounded-2xl px-3.5 py-2.5 leading-relaxed ${
+                      msg.sender === 'guide'
+                        ? 'bg-secondary text-slate-950 font-medium rounded-tr-none'
+                        : 'bg-slate-800 text-white rounded-tl-none border border-slate-700/50'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                  <span className="text-4xs text-slate-500 mt-1">{msg.time}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Bar */}
+            <form onSubmit={handleSendChat} className="flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="Type your message to the customer..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1 rounded-xl bg-slate-950 border border-white/10 px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-secondary"
+              />
+              <button
+                type="submit"
+                className="rounded-xl bg-secondary p-2.5 text-slate-950 hover:brightness-110 shadow"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

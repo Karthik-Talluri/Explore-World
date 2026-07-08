@@ -299,7 +299,7 @@ router.post('/guides', async (req: AuthenticatedRequest, res: Response) => {
           name,
           email,
           password: hashedPassword,
-          role: 'TOUR_GUIDE',
+          role: 'GUIDE',
         },
       });
 

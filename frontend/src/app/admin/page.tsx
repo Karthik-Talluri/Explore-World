@@ -848,7 +848,7 @@ export default function AdminPage() {
                 <form onSubmit={handleCreateGuide} className="glass rounded-2xl p-6 border border-border/60 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs max-w-xl">
                   <div className="sm:col-span-2">
                     <h3 className="font-bold text-sm text-foreground">Register New Tour Guide</h3>
-                    <p className="text-3xs text-muted-foreground">Creates a user account with role TOUR_GUIDE and links their credentials.</p>
+                    <p className="text-3xs text-muted-foreground">Creates a user account with role GUIDE and links their credentials.</p>
                   </div>
                   <div>
                     <label className="block text-3xs font-bold uppercase text-muted-foreground mb-1">Full Name</label>

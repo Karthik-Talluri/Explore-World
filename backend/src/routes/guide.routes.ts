@@ -105,6 +105,7 @@ router.get('/dashboard', async (req: AuthenticatedRequest, res: Response) => {
           roomType: asg.booking.roomType,
           specialRequests: asg.booking.specialRequests,
           pickupLocation: asg.booking.pickupLocation,
+          contactNumber: asg.booking.contactNumber,
           totalPrice: asg.booking.totalPrice,
           status: asg.booking.status,
           invoiceId: asg.booking.invoiceId,
@@ -158,7 +159,7 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
     const assignmentId = req.params.id;
     const { status } = req.body;
 
-    if (!['ACCEPTED', 'REJECTED', 'COMPLETED'].includes(status)) {
+    if (!['ACCEPTED', 'REJECTED', 'STARTED', 'COMPLETED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid assignment status' });
     }
 

@@ -21,6 +21,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
   const [roomType, setRoomType] = useState<'Single' | 'Double' | 'Suite'>('Single');
   const [specialRequests, setSpecialRequests] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
 
   // Payment states
   const [cardNumber, setCardNumber] = useState('');
@@ -70,6 +71,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
           roomType,
           specialRequests,
           pickupLocation,
+          contactNumber,
           paymentMethodId,
         }),
       });
@@ -217,16 +219,31 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
               </div>
 
               {/* Pickup Location */}
-              <div className="sm:col-span-2">
+              <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
                   Pickup Location
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="E.g., Srinagar Airport Arrival, Hotel Lobby, etc."
+                  placeholder="E.g., Srinagar Airport, Hotel Lobby"
                   value={pickupLocation}
                   onChange={(e) => setPickupLocation(e.target.value)}
+                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                />
+              </div>
+
+              {/* Contact Number */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
+                  Contact Number
+                </label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="E.g., +1-555-0199"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
                   className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
                 />
               </div>

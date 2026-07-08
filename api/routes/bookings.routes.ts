@@ -8,7 +8,7 @@ const router = Router();
 router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { packageId, travelDate, travelersCount, roomType, specialRequests, pickupLocation, paymentMethodId } = req.body;
+    const { packageId, travelDate, travelersCount, roomType, specialRequests, pickupLocation, contactNumber, paymentMethodId } = req.body;
 
     if (!userId || !packageId || !travelDate || !travelersCount || !roomType) {
       return res.status(400).json({ message: 'All booking fields are required' });
@@ -45,6 +45,7 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
         roomType,
         specialRequests: specialRequests || '',
         pickupLocation: pickupLocation || 'Hotel Lobby / Airport',
+        contactNumber: contactNumber || '+1-555-0199',
         totalPrice,
         status: paymentStatus === 'PAID' ? 'CONFIRMED' : 'PENDING',
         paymentStatus,
@@ -61,8 +62,8 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
         where: { availability: true },
         include: {
           assignments: {
-            where: {
-              status: { in: ['PENDING', 'ACCEPTED'] }
+            include: {
+              booking: true
             }
           }
         }
@@ -75,10 +76,24 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
         return specList.includes(dest) || g.specialization.toLowerCase().includes(dest);
       });
 
-      if (matchedGuides.length > 0) {
-        // Sort by fewest active assignments
-        matchedGuides.sort((a, b) => a.assignments.length - b.assignments.length);
-        const selectedGuide = matchedGuides[0];
+      // Filter out guides who already have an active tour on this date
+      const availableGuides = matchedGuides.filter((g) => {
+        const hasOverlap = g.assignments.some((asg) => {
+          const asgDate = new Date(asg.booking.travelDate).toDateString();
+          const bookingDate = new Date(travelDate).toDateString();
+          return asgDate === bookingDate && asg.status !== 'REJECTED' && asg.status !== 'COMPLETED';
+        });
+        return !hasOverlap;
+      });
+
+      if (availableGuides.length > 0) {
+        // Sort by fewest active assignments (distribute workload evenly)
+        availableGuides.sort((a, b) => {
+          const countA = a.assignments.filter(asg => asg.status !== 'REJECTED' && asg.status !== 'COMPLETED').length;
+          const countB = b.assignments.filter(asg => asg.status !== 'REJECTED' && asg.status !== 'COMPLETED').length;
+          return countA - countB;
+        });
+        const selectedGuide = availableGuides[0];
 
         await prisma.guideAssignment.create({
           data: {
@@ -90,7 +105,7 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
 
         console.log(`Auto-assigned guide ${selectedGuide.id} to booking ${booking.id}`);
       } else {
-        console.log(`No available guides found for destination ${pkg.destination}`);
+        console.log(`No available guides found for destination ${pkg.destination} on date ${new Date(travelDate).toLocaleDateString()}`);
       }
     }
 

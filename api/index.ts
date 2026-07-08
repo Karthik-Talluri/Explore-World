@@ -98,7 +98,7 @@ async function seedDatabase() {
             email: 'guide@exploreworld.com',
             name: 'John Guide',
             password: hashedGuidePassword,
-            role: 'TOUR_GUIDE',
+            role: 'GUIDE',
           },
         });
 
