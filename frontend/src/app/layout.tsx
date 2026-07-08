@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import ClientLayoutWrapper from "@/components/ClientLayoutWrapper";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -25,11 +24,9 @@ export default function RootLayout({
     <html lang="en" className={`${outfit.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <AppProvider>
-          <Navbar />
-          <main className="flex-grow flex flex-col">
+          <ClientLayoutWrapper>
             {children}
-          </main>
-          <Footer />
+          </ClientLayoutWrapper>
         </AppProvider>
       </body>
     </html>

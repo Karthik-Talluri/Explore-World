@@ -80,7 +80,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (token && user) {
       if (user.role === 'GUIDE') {
-        router.push('/guide');
+        router.push('/guide-dashboard');
       } else if (user.role === 'ADMIN') {
         router.push('/admin');
       }
