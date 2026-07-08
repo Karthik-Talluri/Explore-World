@@ -91,8 +91,8 @@ def run_test():
         return
     
     asg = my_booking["guideAssignment"]
-    guide_name = asg["guide"]["name"]
-    guide_email = asg["guide"]["email"]
+    guide_name = asg["guide"]["user"]["name"]
+    guide_email = asg["guide"]["user"]["email"]
     asg_status = asg["status"]
     asg_id = asg["id"]
     print(f"Assigned Guide: {guide_name} ({guide_email}), Status: {asg_status}")
@@ -137,8 +137,8 @@ def run_test():
         print("Error: Reallocation failed, booking has no guide assignment!")
         return
     
-    new_guide_name = new_asg["guide"]["name"]
-    new_guide_email = new_asg["guide"]["email"]
+    new_guide_name = new_asg["guide"]["user"]["name"]
+    new_guide_email = new_asg["guide"]["user"]["email"]
     new_asg_status = new_asg["status"]
     new_asg_id = new_asg["id"]
     print(f"Reallocated Guide: {new_guide_name} ({new_guide_email}), Status: {new_asg_status}")
@@ -181,8 +181,7 @@ def run_test():
         
     my_booking = next(b for b in history if b["id"] == booking_id)
     final_asg = my_booking["guideAssignment"]
-    print(f"Final Guide Name: {final_asg['guide']['name']}")
-    print(f"Final Guide Phone: {final_asg['guide']['phone']}")
+    print(f"Final Guide Name: {final_asg['guide']['user']['name']}")
     print(f"Final Guide Status: {final_asg['status']}")
 
     print("\n--- E2E PORTAL FLOW TEST COMPLETED SUCCESSFULLY! ---")

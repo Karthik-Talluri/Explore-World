@@ -197,6 +197,13 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
 
     // If guide rejects booking, automatically assign to another available guide
     if (status === 'REJECTED') {
+      const currentList = updated.booking.rejectedGuides || '';
+      const newList = currentList ? `${currentList},${assignment.guideId}` : assignment.guideId;
+      await prisma.booking.update({
+        where: { id: updated.bookingId },
+        data: { rejectedGuides: newList }
+      });
+
       await assignNextGuide(updated.bookingId);
     }
 
@@ -264,16 +271,10 @@ async function assignNextGuide(bookingId: string) {
     });
 
     // Find all guides who have already rejected this specific booking
-    const rejections = await prisma.guideAssignment.findMany({
-      where: {
-        bookingId,
-        status: 'REJECTED'
-      },
-      select: {
-        guideId: true
-      }
-    });
-    const rejectedGuideIds = rejections.map(r => r.guideId);
+    const rejectedGuideIds = (booking.rejectedGuides || '')
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean);
 
     // Filter matching available guides
     const availableGuides = guides.filter((g) => {
@@ -306,9 +307,10 @@ async function assignNextGuide(bookingId: string) {
       });
       const selectedGuide = availableGuides[0];
 
-      await prisma.guideAssignment.create({
+      // Update the single unique assignment record
+      await prisma.guideAssignment.update({
+        where: { bookingId },
         data: {
-          bookingId,
           guideId: selectedGuide.id,
           status: 'PENDING',
         }
