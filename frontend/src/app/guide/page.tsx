@@ -6,9 +6,9 @@ import { useRouter } from 'next/navigation';
 import { 
   Compass, ShieldAlert, Calendar, DollarSign, CheckCircle2, XCircle, 
   Clock, User, MapPin, Users, Star, Award, History, ClipboardCheck, 
-  MessageSquare, ExternalLink, Send, X, Phone
+  MessageSquare, ExternalLink, Send, X, Phone, Mail, Lock, ArrowRight,
+  Wifi, WifiOff
 } from 'lucide-react';
-import AuthModal from '@/components/AuthModal';
 
 interface Assignment {
   id: string;
@@ -64,15 +64,22 @@ interface DashboardData {
   assignments: Assignment[];
 }
 
-export default function GuideDashboard() {
-  const { apiUrl, token, user } = useApp();
+export default function GuidePortal() {
+  const { apiUrl, token, user, login, logout } = useApp();
   const router = useRouter();
 
+  // Login states
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Dashboard states
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   // Chat Panel states
   const [activeChat, setActiveChat] = useState<Assignment | null>(null);
@@ -81,8 +88,8 @@ export default function GuideDashboard() {
 
   const fetchDashboardData = async () => {
     if (!token) return;
-    setLoading(true);
-    setError(null);
+    setDashboardLoading(true);
+    setDashboardError(null);
     try {
       const res = await fetch(`${apiUrl}/api/guide/dashboard`, {
         headers: {
@@ -93,21 +100,81 @@ export default function GuideDashboard() {
       if (!res.ok) throw new Error(resData.message || 'Failed to fetch dashboard data');
       setData(resData);
     } catch (err: any) {
-      setError(err.message);
+      setDashboardError(err.message);
     } finally {
-      setLoading(false);
+      setDashboardLoading(false);
     }
   };
 
   useEffect(() => {
     if (token && user) {
-      if (user.role !== 'GUIDE') {
-        router.push('/');
-      } else {
+      if (user.role === 'GUIDE') {
         fetchDashboardData();
       }
     }
   }, [token, user]);
+
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    setLoginLoading(true);
+
+    try {
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed. Please verify your credentials.');
+      }
+
+      if (data.user.role !== 'GUIDE') {
+        throw new Error('Only Tour Guide accounts are permitted to sign in here.');
+      }
+
+      login(data.token, data.user);
+    } catch (err: any) {
+      setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleToggleAvailability = async () => {
+    if (!data || !token) return;
+    setToggleLoading(true);
+    const nextVal = !data.guide.availability;
+    try {
+      const res = await fetch(`${apiUrl}/api/guide/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ availability: nextVal }),
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.message || 'Failed to update profile');
+
+      setData(prev => prev ? {
+        ...prev,
+        guide: {
+          ...prev.guide,
+          availability: nextVal
+        }
+      } : null);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setToggleLoading(false);
+    }
+  };
 
   const handleUpdateStatus = async (assignmentId: string, newStatus: 'ACCEPTED' | 'REJECTED' | 'STARTED' | 'COMPLETED') => {
     if (!token) return;
@@ -181,28 +248,121 @@ export default function GuideDashboard() {
     }, 1500);
   };
 
-  if (!token) {
+  // RENDER FLOW 1: Unauthenticated or Invalid Role Login Portal
+  if (!token || !user || user.role !== 'GUIDE') {
     return (
-      <div className="mx-auto max-w-md w-full py-32 text-center space-y-6 flex flex-col justify-center min-h-[75vh]">
-        <div className="rounded-2xl border border-dashed border-secondary/30 p-8 bg-card shadow-sm space-y-4">
-          <ShieldAlert className="h-12 w-12 text-secondary mx-auto animate-pulse" />
-          <h2 className="text-xl font-bold text-foreground">Guide Access Required</h2>
-          <p className="text-xs text-muted-foreground">
-            Please sign in with a Tour Guide account to access your assignments and earnings.
-          </p>
-          <button
-            onClick={() => setIsAuthOpen(true)}
-            className="w-full rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-2.5 text-sm font-bold text-slate-950 shadow transition-all"
-          >
-            Sign In
-          </button>
+      <div className="relative flex min-h-[90vh] items-center justify-center bg-slate-950 px-4 py-24 sm:px-6 lg:px-8 overflow-hidden font-sans">
+        {/* Glow backgrounds */}
+        <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-secondary/10 blur-[120px] pointer-events-none"></div>
+        <div className="absolute bottom-1/4 right-1/4 h-[350px] w-[350px] rounded-full bg-amber-500/10 blur-[130px] pointer-events-none"></div>
+
+        <div className="relative w-full max-w-md space-y-8 z-10 animate-fade-in">
+          
+          {user && user.role !== 'GUIDE' ? (
+            // Forbidden access view for users logged in with incorrect roles
+            <div className="glass rounded-3xl border border-destructive/20 p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-6 text-center">
+              <ShieldAlert className="h-14 w-14 text-destructive mx-auto animate-pulse" />
+              <div className="space-y-2">
+                <h2 className="text-xl font-extrabold tracking-tight text-white">Guide Credentials Required</h2>
+                <p className="text-xs text-slate-400">
+                  Your current account is registered as a <strong className="text-secondary uppercase">{user.role}</strong>. Only Tour Guide accounts are permitted to access this portal.
+                </p>
+              </div>
+              <button
+                onClick={logout}
+                className="w-full rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-3 text-xs font-bold text-slate-950 shadow-lg hover:brightness-110 transition-all duration-200"
+              >
+                Logout & Sign In as Guide
+              </button>
+            </div>
+          ) : (
+            // Standard Guide Login Form
+            <>
+              <div className="flex flex-col items-center text-center space-y-3">
+                <a className="flex items-center space-x-2 text-primary font-bold text-2xl" href="/">
+                  <Compass className="h-8 w-8 text-secondary animate-spin-slow" />
+                  <span className="bg-gradient-to-r from-secondary via-amber-300 to-secondary bg-clip-text text-transparent font-black tracking-wide">
+                    Explore World
+                  </span>
+                </a>
+                <div className="space-y-1 mt-2">
+                  <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Tour Guide Console</h2>
+                  <p className="text-xs text-slate-400">Sign in with your Guide credentials to manage assigned tours</p>
+                </div>
+              </div>
+
+              <div className="glass rounded-3xl border border-white/10 p-6 sm:p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl">
+                <form onSubmit={handleLoginSubmit} className="space-y-5">
+                  
+                  {loginError && (
+                    <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-2xs text-destructive flex items-center space-x-2">
+                      <ShieldAlert className="h-4 w-4 shrink-0" />
+                      <span>{loginError}</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-slate-400 block">Guide Email Address</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
+                        <Mail className="h-4 w-4" />
+                      </div>
+                      <input
+                        type="email"
+                        required
+                        placeholder="guide@exploreworld.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full rounded-xl bg-slate-950/80 border border-white/10 pl-11 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-slate-400 block">Security Password</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
+                        <Lock className="h-4 w-4" />
+                      </div>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full rounded-xl bg-slate-950/80 border border-white/10 pl-11 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-secondary transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loginLoading}
+                    className="group relative flex w-full justify-center items-center space-x-2 rounded-xl bg-gradient-to-r from-secondary to-amber-600 py-3 text-xs font-bold text-slate-950 shadow-lg hover:brightness-110 disabled:opacity-50 transition-all duration-200"
+                  >
+                    <span>{loginLoading ? 'Signing In...' : 'Sign In as Guide'}</span>
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+                </form>
+              </div>
+
+              <div className="flex justify-between items-center text-3xs text-slate-500 px-4">
+                <a className="hover:text-white transition-colors" href="/">← Back to explore website</a>
+                <span className="flex items-center space-x-1">
+                  <ShieldAlert className="h-3 w-3 text-secondary" />
+                  <span>Secure Portal Authorization</span>
+                </span>
+              </div>
+            </>
+          )}
+
         </div>
-        <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       </div>
     );
   }
 
-  if (loading) {
+  // RENDER FLOW 2: Loading State for Dashboard Data
+  if (dashboardLoading) {
     return (
       <div className="mx-auto max-w-7xl w-full px-4 py-16 space-y-8 animate-pulse">
         <div className="h-16 w-1/3 bg-muted rounded-2xl" />
@@ -216,11 +376,18 @@ export default function GuideDashboard() {
     );
   }
 
-  if (error || !data) {
+  // RENDER FLOW 3: Error State for Dashboard Data
+  if (dashboardError || !data) {
     return (
       <div className="mx-auto max-w-lg w-full py-32 text-center">
-        <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-6 text-sm text-destructive">
-          Failed to load guide dashboard: {error}
+        <div className="rounded-2xl bg-destructive/10 border border-destructive/20 p-6 text-sm text-destructive space-y-4">
+          <p>Failed to load guide dashboard: {dashboardError}</p>
+          <button
+            onClick={fetchDashboardData}
+            className="rounded-xl bg-secondary px-4 py-2 text-2xs text-slate-950 font-bold hover:brightness-110"
+          >
+            Retry Request
+          </button>
         </div>
       </div>
     );
@@ -231,8 +398,9 @@ export default function GuideDashboard() {
   const historyAssignments = data.assignments.filter(a => ['COMPLETED', 'REJECTED'].includes(a.status));
   const ratings = data.assignments.filter(a => a.rating !== null && a.rating !== undefined);
 
+  // RENDER FLOW 4: Full Guide Dashboard Portal
   return (
-    <div className="mx-auto max-w-7xl w-full px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in">
+    <div className="mx-auto max-w-7xl w-full px-4 py-8 sm:px-6 lg:px-8 space-y-8 animate-fade-in font-sans">
       
       {/* Welcome Header */}
       <div className="rounded-3xl bg-slate-950 border border-secondary/20 relative p-6 sm:p-8 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-xl">
@@ -240,15 +408,43 @@ export default function GuideDashboard() {
         <div className="relative z-10 space-y-1">
           <span className="text-xs font-bold text-secondary uppercase tracking-widest block">Guide Console</span>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">Welcome back, {data.guide.name}!</h1>
-          <p className="text-xs text-slate-400">Specialization: <strong>{data.guide.specialization}</strong> • Status: <strong>{data.guide.availability ? 'Available for Tours' : 'Unavailable'}</strong></p>
+          <p className="text-xs text-slate-400">Specialization: <strong>{data.guide.specialization}</strong></p>
         </div>
-        <div className="relative z-10 flex items-center space-x-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2 text-xs font-semibold text-secondary">
-          <Compass className="h-4 w-4 animate-spin-slow" />
-          <span>Tour Guide Portal Active</span>
+
+        {/* Availability Toggle Switch */}
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <button
+            disabled={toggleLoading}
+            onClick={handleToggleAvailability}
+            className={`flex items-center space-x-2 rounded-xl border px-4 py-2 text-xs font-bold transition-all shadow ${
+              data.guide.availability
+                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20'
+                : 'bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20'
+            }`}
+          >
+            {data.guide.availability ? (
+              <>
+                <Wifi className="h-4 w-4 animate-pulse" />
+                <span>Status: Online</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-4 w-4" />
+                <span>Status: Offline</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={logout}
+            className="text-xs font-bold text-slate-400 hover:text-white border border-white/10 px-4 py-2 rounded-xl bg-white/5 transition-all"
+          >
+            Sign Out
+          </button>
         </div>
       </div>
 
-      {/* KPI Stats cards */}
+      {/* KPI Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-1.5">
           <span className="text-4xs font-bold uppercase tracking-wider text-muted-foreground block">Assigned Tours</span>
@@ -285,7 +481,7 @@ export default function GuideDashboard() {
           <div className="space-y-4">
             <h2 className="text-md font-bold text-foreground flex items-center space-x-1.5 uppercase tracking-wider">
               <Clock className="h-4.5 w-4.5 text-secondary" />
-              <span>Pending Tour Requests</span>
+              <span>Pending Booking Requests</span>
             </h2>
 
             {pendingAssignments.length === 0 ? (
@@ -350,7 +546,7 @@ export default function GuideDashboard() {
           <div className="space-y-4">
             <h2 className="text-md font-bold text-foreground flex items-center space-x-1.5 uppercase tracking-wider">
               <ClipboardCheck className="h-4.5 w-4.5 text-secondary" />
-              <span>Active Guided Tours</span>
+              <span>Assigned Bookings</span>
             </h2>
 
             {activeAssignments.length === 0 ? (
@@ -391,7 +587,7 @@ export default function GuideDashboard() {
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-4xs font-bold uppercase tracking-wider text-muted-foreground block">Inclusions & Logistics</span>
+                        <span className="text-4xs font-bold uppercase tracking-wider text-muted-foreground block">Package Details</span>
                         <p className="text-3xs text-foreground">🏨 Hotel: {asg.booking.package.hotelDetails}</p>
                         <p className="text-3xs text-foreground">🚐 Transport: {asg.booking.package.transportation}</p>
                       </div>
@@ -412,13 +608,6 @@ export default function GuideDashboard() {
                           </div>
                         </div>
                       </div>
-
-                      {asg.booking.specialRequests && (
-                        <div className="col-span-1 md:col-span-2 rounded-lg bg-muted/40 p-2.5 text-3xs border border-border/20">
-                          <span className="font-bold text-foreground block mb-0.5">Special Requests Note:</span>
-                          <span className="italic">"{asg.booking.specialRequests}"</span>
-                        </div>
-                      )}
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-border/20">
@@ -461,7 +650,7 @@ export default function GuideDashboard() {
                         className="rounded-xl border border-white/10 bg-slate-900/60 hover:bg-slate-950 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1"
                       >
                         <MessageSquare className="h-3.5 w-3.5 text-secondary animate-pulse" />
-                        <span>Chat</span>
+                        <span>Chat Button</span>
                       </button>
 
                     </div>
@@ -531,7 +720,7 @@ export default function GuideDashboard() {
         <div className="space-y-6">
           <h2 className="text-md font-bold text-foreground flex items-center space-x-1.5 uppercase tracking-wider">
             <Star className="h-4.5 w-4.5 text-secondary" />
-            <span>Customer Ratings & Reviews</span>
+            <span>Ratings & Reviews</span>
           </h2>
 
           <div className="rounded-2xl border border-border bg-card p-5 shadow-sm space-y-4">
@@ -591,7 +780,7 @@ export default function GuideDashboard() {
 
       </div>
 
-      {/* CUSTOMER CHAT DIALOG */}
+      {/* MOCK CUSTOMER CHAT DIALOG */}
       {activeChat && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 p-5 shadow-2xl flex flex-col h-[500px] text-xs">

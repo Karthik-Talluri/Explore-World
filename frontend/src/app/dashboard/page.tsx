@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { Compass, ShieldAlert, Ticket, Calendar, Heart, Info, ArrowDownToLine, Receipt, FileText, Home, Palmtree } from 'lucide-react';
+import { Compass, ShieldAlert, Ticket, Calendar, Heart, Info, ArrowDownToLine, Receipt, FileText, Home, Palmtree, MessageSquare, Send, Phone, User } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ interface Booking {
   roomType: string;
   specialRequests: string;
   pickupLocation: string;
+  contactNumber: string;
   totalPrice: number;
   status: 'CONFIRMED' | 'CANCELLED';
   paymentStatus: string;
@@ -51,6 +52,11 @@ export default function DashboardPage() {
   const [guideFeedback, setGuideFeedback] = useState<string>('');
   const [ratingLoading, setRatingLoading] = useState<boolean>(false);
 
+  // Chat state
+  const [activeChat, setActiveChat] = useState<Booking | null>(null);
+  const [chatMessages, setChatMessages] = useState<{[key: string]: { sender: 'guide' | 'customer', text: string, time: string }[]}>({});
+  const [newMessage, setNewMessage] = useState('');
+
   const fetchBookings = async () => {
     if (!token) return;
     setLoading(true);
@@ -74,7 +80,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (token && user) {
       if (user.role === 'GUIDE') {
-        router.push('/guide-dashboard');
+        router.push('/guide');
       } else if (user.role === 'ADMIN') {
         router.push('/admin');
       }
@@ -86,6 +92,52 @@ export default function DashboardPage() {
       fetchBookings();
     }
   }, [token]);
+
+  const getInitialMessages = (b: Booking) => [
+    { sender: 'customer' as const, text: `Hello! Can we confirm the pickup location?`, time: '9:02 AM' },
+    { sender: 'guide' as const, text: `Hi ${user?.name || 'Traveller'}! I will meet you at the ${b.pickupLocation || 'scheduled location'}.`, time: '9:05 AM' },
+    { sender: 'customer' as const, text: `Perfect! My contact number is ${b.contactNumber || 'on file'} in case you need to call.`, time: '9:08 AM' },
+  ];
+
+  const handleOpenChat = (b: Booking) => {
+    setActiveChat(b);
+    if (!chatMessages[b.id]) {
+      setChatMessages(prev => ({
+        ...prev,
+        [b.id]: getInitialMessages(b)
+      }));
+    }
+  };
+
+  const handleSendChat = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activeChat) return;
+
+    const userMsg = {
+      sender: 'customer' as const,
+      text: newMessage.trim(),
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatMessages(prev => ({
+      ...prev,
+      [activeChat.id]: [...(prev[activeChat.id] || []), userMsg]
+    }));
+    setNewMessage('');
+
+    // Trigger mock automatic reply from guide
+    setTimeout(() => {
+      const reply = {
+        sender: 'guide' as const,
+        text: `Hi! Understood. I will keep you updated. See you soon!`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setChatMessages(prev => ({
+        ...prev,
+        [activeChat.id]: [...(prev[activeChat.id] || []), reply]
+      }));
+    }, 1500);
+  };
 
   const handleCancelBooking = async (bookingId: string) => {
     if (!confirm('Are you sure you want to cancel this tour booking reservation? Refund operations take 2-3 business days.')) return;
@@ -241,7 +293,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    {/* Guide Assignment Info */}
+                     {/* Guide Assignment Info */}
                     {booking.guideAssignment && (
                       <div className="rounded-xl bg-slate-900 border border-slate-800/80 p-3 mt-1 flex items-center justify-between text-xs">
                         <div className="space-y-1">
@@ -254,6 +306,12 @@ export default function DashboardPage() {
                             }`} />
                             <span>{booking.guideAssignment.guide.user.name}</span>
                           </div>
+                          {['ACCEPTED', 'STARTED', 'COMPLETED'].includes(booking.guideAssignment.status) && (
+                            <p className="text-3xs text-secondary font-mono flex items-center space-x-1 mt-0.5">
+                              <Phone className="h-3 w-3" />
+                              <span>Phone: +1-555-0199</span>
+                            </p>
+                          )}
                         </div>
                         <div className="text-right space-y-1">
                           <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block">
@@ -278,6 +336,15 @@ export default function DashboardPage() {
                     <div className="border-t border-border/20 pt-3 flex items-center justify-between">
                       <span className="text-sm font-extrabold text-foreground">₹{booking.totalPrice.toLocaleString('en-IN')}</span>
                       <div className="flex items-center space-x-2">
+                        {booking.guideAssignment && ['ACCEPTED', 'STARTED'].includes(booking.guideAssignment.status) && (
+                          <button
+                            onClick={() => handleOpenChat(booking)}
+                            className="rounded-lg border border-white/10 bg-slate-900/60 hover:bg-slate-950 px-3 py-1.5 text-2xs font-bold text-slate-300 flex items-center space-x-1"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5 text-secondary animate-pulse" />
+                            <span>Chat with Guide</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => setSelectedInvoice(booking)}
                           className="rounded-lg border border-border hover:bg-accent px-3 py-1.5 text-2xs font-semibold text-foreground flex items-center space-x-1"
@@ -499,6 +566,74 @@ export default function DashboardPage() {
               <span>{ratingLoading ? 'Submitting...' : 'Submit Rating & Feedback'}</span>
             </button>
           </form>
+        </div>
+      )}
+
+      {/* MOCK GUIDE CHAT DIALOG */}
+      {activeChat && activeChat.guideAssignment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 p-5 shadow-2xl flex flex-col h-[500px] text-xs">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-border/20 pb-3.5 mb-3.5">
+              <div className="flex items-center space-x-2.5">
+                <div className="rounded-full bg-secondary/10 p-2 text-secondary">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">Guide: {activeChat.guideAssignment.guide.user.name}</h3>
+                  <span className="text-3xs text-secondary font-semibold font-mono">Contact: +1-555-0199</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveChat(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Message List */}
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 mb-4">
+              {(chatMessages[activeChat.id] || []).map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex flex-col max-w-[80%] ${
+                    msg.sender === 'customer' ? 'ml-auto items-end' : 'mr-auto items-start'
+                  }`}
+                >
+                  <div
+                    className={`rounded-2xl px-3.5 py-2.5 leading-relaxed ${
+                      msg.sender === 'customer'
+                        ? 'bg-secondary text-slate-950 font-medium rounded-tr-none'
+                        : 'bg-slate-800 text-white rounded-tl-none border border-slate-700/50'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                  <span className="text-4xs text-slate-500 mt-1">{msg.time}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Bar */}
+            <form onSubmit={handleSendChat} className="flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="Type your message to the guide..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1 rounded-xl bg-slate-950 border border-white/10 px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-secondary"
+              />
+              <button
+                type="submit"
+                className="rounded-xl bg-secondary p-2.5 text-slate-950 hover:brightness-110 shadow"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+
+          </div>
         </div>
       )}
 

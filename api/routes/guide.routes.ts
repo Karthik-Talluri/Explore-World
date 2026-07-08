@@ -157,7 +157,7 @@ router.get('/dashboard', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// Update booking assignment status (Accept / Reject / Complete Tour)
+// Update booking assignment status (Accept / Reject / Start / Complete Tour)
 router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const guide = await getTourGuideProfile(req, res);
@@ -195,6 +195,11 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
       },
     });
 
+    // If guide rejects booking, automatically assign to another available guide
+    if (status === 'REJECTED') {
+      await assignNextGuide(updated.bookingId);
+    }
+
     return res.json({
       message: `Assignment marked as ${status.toLowerCase()}`,
       assignment: updated,
@@ -204,5 +209,116 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Toggle availability (Online/Offline status)
+router.put('/profile', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const guide = await prisma.tourGuide.findUnique({
+      where: { userId: req.user?.id }
+    });
+    if (!guide) {
+      return res.status(404).json({ message: 'Guide profile not found' });
+    }
+
+    const { availability } = req.body;
+    if (availability === undefined) {
+      return res.status(400).json({ message: 'Availability status is required' });
+    }
+
+    const updated = await prisma.tourGuide.update({
+      where: { id: guide.id },
+      data: { availability: Boolean(availability) }
+    });
+
+    return res.json({
+      message: `Status updated to ${updated.availability ? 'Online' : 'Offline'}`,
+      guide: updated
+    });
+  } catch (error) {
+    console.error('Update guide availability error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Helper function to automatically reassign rejected tours to another available guide
+async function assignNextGuide(bookingId: string) {
+  try {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { package: true }
+    });
+    if (!booking) return;
+
+    const pkg = booking.package;
+
+    // Find all guides who are online (availability = true)
+    const guides = await prisma.tourGuide.findMany({
+      where: { availability: true },
+      include: {
+        assignments: {
+          include: {
+            booking: true
+          }
+        }
+      }
+    });
+
+    // Find all guides who have already rejected this specific booking
+    const rejections = await prisma.guideAssignment.findMany({
+      where: {
+        bookingId,
+        status: 'REJECTED'
+      },
+      select: {
+        guideId: true
+      }
+    });
+    const rejectedGuideIds = rejections.map(r => r.guideId);
+
+    // Filter matching available guides
+    const availableGuides = guides.filter((g) => {
+      // Exclude guides who already rejected
+      if (rejectedGuideIds.includes(g.id)) return false;
+
+      // Specialization check
+      const specList = g.specialization.toLowerCase().split(',').map(s => s.trim());
+      const dest = pkg.destination.toLowerCase();
+      const matchesDest = specList.includes(dest) || g.specialization.toLowerCase().includes(dest);
+      if (!matchesDest) return false;
+
+      // Overlapping booking check on same date
+      const hasOverlap = g.assignments.some((asg) => {
+        const asgDate = new Date(asg.booking.travelDate).toDateString();
+        const bookingDate = new Date(booking.travelDate).toDateString();
+        return asgDate === bookingDate && asg.status !== 'REJECTED' && asg.status !== 'COMPLETED';
+      });
+      return !hasOverlap;
+    });
+
+    if (availableGuides.length > 0) {
+      // Sort by fewest active assignments (distribute workload evenly)
+      availableGuides.sort((a, b) => {
+        const countA = a.assignments.filter(asg => asg.status !== 'REJECTED' && asg.status !== 'COMPLETED').length;
+        const countB = b.assignments.filter(asg => asg.status !== 'REJECTED' && asg.status !== 'COMPLETED').length;
+        return countA - countB;
+      });
+      const selectedGuide = availableGuides[0];
+
+      await prisma.guideAssignment.create({
+        data: {
+          bookingId,
+          guideId: selectedGuide.id,
+          status: 'PENDING',
+        }
+      });
+
+      console.log(`Auto-reassigned guide ${selectedGuide.id} to booking ${bookingId} after rejection`);
+    } else {
+      console.log(`No other available guides found for booking ${bookingId} after rejection`);
+    }
+  } catch (error) {
+    console.error('Error reassigning guide:', error);
+  }
+}
 
 export default router;
