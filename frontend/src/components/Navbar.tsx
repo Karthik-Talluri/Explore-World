@@ -73,11 +73,11 @@ export default function Navbar() {
                 Admin Panel
               </Link>
             )}
-            {user?.role === 'GUIDE' && (
+            {(user?.role === 'GUIDE' || user?.role === 'TOUR_GUIDE') && (
               <Link
-                href="/guide-dashboard"
+                href="/guide"
                 className={`text-sm font-semibold transition-colors duration-200 ${
-                  isActive('/guide-dashboard') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                  isActive('/guide') ? 'text-secondary' : 'text-slate-300 hover:text-white'
                 }`}
               >
                 Guide Dashboard
@@ -122,7 +122,7 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center space-x-3">
                 <Link
-                  href={user.role === 'ADMIN' ? '/admin' : user.role === 'GUIDE' ? '/guide-dashboard' : '/dashboard'}
+                  href={user.role === 'ADMIN' ? '/admin' : (user.role === 'GUIDE' || user.role === 'TOUR_GUIDE') ? '/guide' : '/dashboard'}
                   className="hidden sm:flex items-center space-x-1.5 text-xs font-semibold text-slate-300 hover:text-secondary transition-colors"
                 >
                   <UserIcon className="h-4 w-4 text-secondary" />
@@ -138,12 +138,6 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Link
-                  href="/guide-login"
-                  className="rounded-xl border border-secondary/20 hover:bg-secondary/10 px-4 py-2 text-xs font-bold text-secondary transition-all duration-200"
-                >
-                  Guide Login
-                </Link>
                 <button
                   onClick={() => setIsAuthOpen(true)}
                   className="rounded-xl border border-white/10 hover:bg-white/5 px-4 py-2 text-xs font-bold text-white transition-all duration-200"

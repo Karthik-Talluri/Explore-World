@@ -79,8 +79,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (token && user) {
-      if (user.role === 'GUIDE') {
-        router.push('/guide-dashboard');
+      if (user.role === 'GUIDE' || user.role === 'TOUR_GUIDE') {
+        router.push('/guide');
       } else if (user.role === 'ADMIN') {
         router.push('/admin');
       }

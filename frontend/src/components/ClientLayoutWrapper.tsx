@@ -11,22 +11,26 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   const router = useRouter();
   const { token, user } = useApp();
 
-  const isPortal = pathname.startsWith('/guide-dashboard') || 
-                   pathname.startsWith('/guide-login') || 
+  const isPortal = pathname === '/guide' || 
+                   pathname.startsWith('/guide/') || 
                    pathname.startsWith('/admin');
 
   useEffect(() => {
     if (token && user) {
-      const isGuideRoute = pathname.startsWith('/guide-dashboard') || pathname.startsWith('/guide-login');
+      const isGuideRoute = pathname === '/guide' || pathname.startsWith('/guide/');
       
       // 1. Guide users must never see traveller pages after login
       if ((user.role === 'GUIDE' || user.role === 'TOUR_GUIDE') && !isGuideRoute) {
-        router.push('/guide-dashboard');
+        router.push('/guide');
       }
       
       // 2. Traveller users must never access guide pages
-      if (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' && pathname.startsWith('/guide-dashboard')) {
-        router.push('/dashboard');
+      if (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' && isGuideRoute) {
+        if (user.role === 'ADMIN') {
+          router.push('/admin');
+        } else {
+          router.push('/dashboard');
+        }
       }
     }
   }, [token, user, pathname]);

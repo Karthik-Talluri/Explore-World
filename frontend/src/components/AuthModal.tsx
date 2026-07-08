@@ -49,8 +49,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setPassword('');
       setName('');
 
-      if (data.user.role === 'GUIDE') {
-        router.push('/guide-dashboard');
+      if (data.user.role === 'GUIDE' || data.user.role === 'TOUR_GUIDE') {
+        router.push('/guide');
       }
     } catch (err: any) {
       setError(err.message);
