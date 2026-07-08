@@ -3,6 +3,7 @@ import json
 import time
 import ssl
 import datetime
+import random
 
 BASE_URL = "https://explore-world-inky.vercel.app"
 
@@ -54,9 +55,10 @@ def run_test():
     kashmir_pkg_id = kashmir_pkg["id"]
     print(f"Found Kashmir package ID: {kashmir_pkg_id}")
 
-    # Generate a dynamic travel date 2 days in the future to avoid scheduling overlaps
-    travel_date = (datetime.date.today() + datetime.timedelta(days=2)).isoformat()
-    print(f"Dynamic travel date generated: {travel_date}")
+    # Generate a random travel date between 5 and 100 days in the future to ensure fresh scheduling slots
+    offset_days = random.randint(5, 100)
+    travel_date = (datetime.date.today() + datetime.timedelta(days=offset_days)).isoformat()
+    print(f"Dynamic travel date generated: {travel_date} (Offset: {offset_days} days)")
 
     # Step 2: Book Kashmir Tour
     print("\n2. Booking Kashmir Tour package...")
