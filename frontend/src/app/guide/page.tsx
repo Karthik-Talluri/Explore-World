@@ -109,42 +109,53 @@ export default function TourGuidePortal() {
     }
   };
 
+  // 1. Silent automatic authentication using default guide credentials
+  useEffect(() => {
+    if (!token || !user || (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE')) {
+      const triggerAutoLogin = async () => {
+        setLoginLoading(true);
+        setLoginError(null);
+        try {
+          const response = await fetch(`${apiUrl}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: 'guide@exploreworld.com', password: 'guide123' }),
+          });
+
+          const resData = await response.json();
+          if (!response.ok) {
+            throw new Error(resData.message || 'Auto-login failed.');
+          }
+
+          if (resData.user.role !== 'GUIDE' && resData.user.role !== 'TOUR_GUIDE') {
+            throw new Error('Only Tour Guide accounts are permitted to sign in here.');
+          }
+
+          login(resData.token, resData.user);
+        } catch (err: any) {
+          setLoginError('Failed to automatically open tour guide portal: ' + err.message);
+        } finally {
+          setLoginLoading(false);
+        }
+      };
+      triggerAutoLogin();
+    }
+  }, [token, user, apiUrl]);
+
+  // 2. Fetch dashboard data when authenticated as guide
   useEffect(() => {
     if (token && user && (user.role === 'GUIDE' || user.role === 'TOUR_GUIDE')) {
       fetchDashboardData();
     }
   }, [token, user]);
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError(null);
-    setLoginLoading(true);
-
-    try {
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const resData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(resData.message || 'Login failed. Please verify your credentials.');
-      }
-
-      if (resData.user.role !== 'GUIDE' && resData.user.role !== 'TOUR_GUIDE') {
-        throw new Error('Only Tour Guide accounts are permitted to sign in here.');
-      }
-
-      login(resData.token, resData.user);
-    } catch (err: any) {
-      setLoginError(err.message);
-    } finally {
-      setLoginLoading(false);
-    }
+  const handleLogout = () => {
+    logout();
+    sessionStorage.removeItem('explore_world_role');
+    window.dispatchEvent(new Event('explore-world-role-changed'));
+    router.push('/');
   };
 
   const handleToggleAvailability = async () => {
@@ -257,7 +268,7 @@ export default function TourGuidePortal() {
         <div className="absolute top-1/4 left-1/4 h-[300px] w-[300px] rounded-full bg-amber-500/10 blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-1/4 right-1/4 h-[350px] w-[350px] rounded-full bg-amber-500/10 blur-[130px] pointer-events-none"></div>
 
-        <div className="relative w-full max-w-md space-y-8 z-10">
+        <div className="relative w-full max-w-md space-y-8 z-10 text-center">
           
           {user && user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' ? (
             <div className="rounded-3xl border border-rose-500/20 p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-6 text-center">
@@ -269,7 +280,7 @@ export default function TourGuidePortal() {
                 </p>
               </div>
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3 text-xs font-bold text-slate-950 shadow-lg hover:brightness-110 transition-all duration-200"
               >
                 Logout & Sign In as Guide
@@ -277,75 +288,35 @@ export default function TourGuidePortal() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col items-center text-center space-y-3">
-                <a className="flex items-center space-x-2 text-primary font-bold text-2xl" href="/">
-                  <Compass className="h-8 w-8 text-amber-500 animate-spin-slow" />
-                  <span className="bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 bg-clip-text text-transparent font-black tracking-wide">
-                    Explore World
-                  </span>
-                </a>
-                <div className="space-y-1 mt-2">
+              <div className="flex flex-col items-center space-y-3">
+                <Compass className="h-10 w-10 text-amber-500 animate-spin" />
+                <div className="space-y-1.5 mt-2">
                   <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Tour Guide Portal</h2>
-                  <p className="text-xs text-slate-400">Sign in with your Guide credentials to manage assigned tours</p>
+                  <p className="text-xs text-slate-400 font-medium">Opening Tour Guide Dashboard...</p>
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 p-6 sm:p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl">
-                <form onSubmit={handleLoginSubmit} className="space-y-5">
-                  
-                  {loginError && (
-                    <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-500 flex items-center space-x-2">
-                      <ShieldAlert className="h-4 w-4 shrink-0" />
-                      <span>{loginError}</span>
-                    </div>
-                  )}
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Guide Email Address</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-                        <Mail className="h-4 w-4" />
-                      </div>
-                      <input
-                        type="email"
-                        required
-                        placeholder="guide@exploreworld.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full rounded-xl bg-slate-950/80 border border-white/10 pl-11 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-all"
-                      />
-                    </div>
+              {loginError ? (
+                <div className="rounded-3xl border border-white/10 p-6 sm:p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-4">
+                  <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-500 flex items-center justify-center space-x-2">
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                    <span>{loginError}</span>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Security Password</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-500">
-                        <Lock className="h-4 w-4" />
-                      </div>
-                      <input
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full rounded-xl bg-slate-950/80 border border-white/10 pl-11 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-all"
-                      />
-                    </div>
-                  </div>
-
                   <button
-                    type="submit"
-                    disabled={loginLoading}
-                    className="group relative flex w-full justify-center items-center space-x-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3 text-xs font-bold text-slate-950 shadow-lg hover:brightness-110 disabled:opacity-50 transition-all duration-200"
+                    onClick={() => {
+                      setLoginError(null);
+                      router.refresh();
+                    }}
+                    className="w-full rounded-xl bg-amber-500 py-2.5 text-xs font-bold text-slate-950 hover:brightness-110"
                   >
-                    <span>{loginLoading ? 'Signing In...' : 'Sign In as Guide'}</span>
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                    Retry Portal Access
                   </button>
-                </form>
-              </div>
+                </div>
+              ) : (
+                <p className="text-2xs text-slate-500 italic">Please wait while we verify your guide session credentials.</p>
+              )}
 
-              <div className="flex justify-between items-center text-[10px] text-slate-500 px-4">
+              <div className="flex justify-between items-center text-[10px] text-slate-500 px-4 pt-4 border-t border-white/5">
                 <a className="hover:text-white transition-colors" href="/">← Back to explorer website</a>
                 <span className="flex items-center space-x-1 font-mono">
                   <ShieldAlert className="h-3 w-3 text-amber-500" />
@@ -507,7 +478,7 @@ export default function TourGuidePortal() {
 
         {/* Sidebar Footer - Logout */}
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-500/10 transition-all"
         >
           <LogOut className="h-4.5 w-4.5" />
