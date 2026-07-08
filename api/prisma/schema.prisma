@@ -12,11 +12,12 @@ model User {
   email     String    @unique
   password  String
   name      String
-  role      String    @default("USER") // "USER" or "ADMIN"
+  role      String    @default("USER") // "USER", "ADMIN", or "TOUR_GUIDE"
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   bookings  Booking[]
   reviews   Review[]
+  tourGuide TourGuide?
 }
 
 model TourPackage {
@@ -59,12 +60,14 @@ model Booking {
   travelersCount  Int
   roomType        String      // "Single", "Double", "Suite"
   specialRequests String      @default("")
+  pickupLocation  String      @default("Hotel Lobby / Airport")
   totalPrice      Float
   status          String      @default("CONFIRMED") // "CONFIRMED", "CANCELLED"
   paymentStatus   String      @default("PAID")      // "PENDING", "PAID", "FAILED"
   invoiceId       String      @unique
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+  guideAssignment GuideAssignment?
 }
 
 model Review {
@@ -86,4 +89,28 @@ model Inquiry {
   packageId String
   package   TourPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
   createdAt DateTime    @default(now())
+}
+
+model TourGuide {
+  id             String            @id @default(uuid())
+  userId         String            @unique
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String            // Comma-separated list of destinations, e.g. "Kashmir, Rajasthan"
+  availability   Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  assignments    GuideAssignment[]
+}
+
+model GuideAssignment {
+  id         String    @id @default(uuid())
+  bookingId  String    @unique
+  booking    Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  guideId    String
+  guide      TourGuide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  status     String    @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED", "COMPLETED"
+  rating     Int?      // Customer rating for the guide in this assignment (1-5)
+  feedback   String?   // Customer comments for the guide in this assignment
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }

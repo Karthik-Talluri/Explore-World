@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { X, Mail, Lock, User as UserIcon, AlertCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { apiUrl, login } = useApp();
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,6 +48,10 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       setEmail('');
       setPassword('');
       setName('');
+
+      if (data.user.role === 'TOUR_GUIDE') {
+        router.push('/guide-dashboard');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

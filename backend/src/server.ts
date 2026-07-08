@@ -10,6 +10,7 @@ import packageRoutes from './routes/packages.routes';
 import bookingRoutes from './routes/bookings.routes';
 import adminRoutes from './routes/admin.routes';
 import aiRoutes from './routes/ai.routes';
+import guideRoutes from './routes/guide.routes';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ app.use('/api/packages', packageRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/guide', guideRoutes);
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -71,6 +73,28 @@ async function seedDatabase() {
             name: 'Jane Doe',
             password: hashedUserPassword,
             role: 'USER',
+          },
+        });
+      }
+
+      // Seed tour guide if missing
+      const guideExists = await prisma.user.findUnique({ where: { email: 'guide@exploreworld.com' } });
+      if (!guideExists) {
+        const hashedGuidePassword = await bcrypt.hash('guide123', 10);
+        const guideUser = await prisma.user.create({
+          data: {
+            email: 'guide@exploreworld.com',
+            name: 'John Guide',
+            password: hashedGuidePassword,
+            role: 'TOUR_GUIDE',
+          },
+        });
+
+        await prisma.tourGuide.create({
+          data: {
+            userId: guideUser.id,
+            specialization: 'Kashmir, Rajasthan',
+            availability: true,
           },
         });
       }

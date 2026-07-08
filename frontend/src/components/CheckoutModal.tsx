@@ -20,6 +20,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
   const [travelersCount, setTravelersCount] = useState(activeBooking?.travelersCount || 1);
   const [roomType, setRoomType] = useState<'Single' | 'Double' | 'Suite'>('Single');
   const [specialRequests, setSpecialRequests] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
 
   // Payment states
   const [cardNumber, setCardNumber] = useState('');
@@ -68,6 +69,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
           travelersCount,
           roomType,
           specialRequests,
+          pickupLocation,
           paymentMethodId,
         }),
       });
@@ -212,6 +214,21 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                   <option value="Double">Double Room (+10%)</option>
                   <option value="Suite">Premium Luxury Suite (+30%)</option>
                 </select>
+              </div>
+
+              {/* Pickup Location */}
+              <div className="sm:col-span-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
+                  Pickup Location
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="E.g., Srinagar Airport Arrival, Hotel Lobby, etc."
+                  value={pickupLocation}
+                  onChange={(e) => setPickupLocation(e.target.value)}
+                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                />
               </div>
 
               {/* Requests */}

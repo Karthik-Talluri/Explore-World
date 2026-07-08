@@ -63,6 +63,36 @@ export default function Navbar() {
             >
               International Tours
             </Link>
+            {user?.role === 'ADMIN' && (
+              <Link
+                href="/admin"
+                className={`text-sm font-semibold transition-colors duration-200 ${
+                  isActive('/admin') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Admin Panel
+              </Link>
+            )}
+            {user?.role === 'TOUR_GUIDE' && (
+              <Link
+                href="/guide-dashboard"
+                className={`text-sm font-semibold transition-colors duration-200 ${
+                  isActive('/guide-dashboard') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Guide Dashboard
+              </Link>
+            )}
+            {user?.role === 'USER' && (
+              <Link
+                href="/dashboard"
+                className={`text-sm font-semibold transition-colors duration-200 ${
+                  isActive('/dashboard') ? 'text-secondary' : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                My Dashboard
+              </Link>
+            )}
             <button
               onClick={() => handleNavClick('#about-us')}
               className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
@@ -91,10 +121,13 @@ export default function Navbar() {
             {/* Auth Buttons */}
             {user ? (
               <div className="flex items-center space-x-3">
-                <div className="hidden sm:flex items-center space-x-1.5 text-xs font-semibold text-slate-300">
+                <Link
+                  href={user.role === 'ADMIN' ? '/admin' : user.role === 'TOUR_GUIDE' ? '/guide-dashboard' : '/dashboard'}
+                  className="hidden sm:flex items-center space-x-1.5 text-xs font-semibold text-slate-300 hover:text-secondary transition-colors"
+                >
                   <UserIcon className="h-4 w-4 text-secondary" />
                   <span>{user.name}</span>
-                </div>
+                </Link>
                 <button
                   onClick={logout}
                   className="flex items-center space-x-1 rounded-xl border border-white/10 px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-all duration-200"

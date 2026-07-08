@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import prisma from '../db';
 import { authenticateJWT, requireAdmin, AuthenticatedRequest } from '../middleware/auth.middleware';
 
@@ -210,6 +211,266 @@ router.delete('/reviews/:id', async (req: AuthenticatedRequest, res: Response) =
     return res.json({ message: 'Review deleted successfully' });
   } catch (error) {
     console.error('Delete review error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// List all tour guides with statistics
+router.get('/guides', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const guides = await prisma.tourGuide.findMany({
+      include: {
+        user: { select: { name: true, email: true, role: true } },
+        assignments: {
+          include: {
+            booking: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const formattedGuides = guides.map((guide) => {
+      let totalEarnings = 0;
+      let activeBookings = 0;
+      let completedTours = 0;
+      let totalRatingCount = 0;
+      let totalRatingSum = 0;
+
+      guide.assignments.forEach((asg) => {
+        if (asg.status === 'PENDING' || asg.status === 'ACCEPTED') {
+          activeBookings++;
+        }
+        if (asg.status === 'COMPLETED') {
+          completedTours++;
+          totalEarnings += asg.booking.totalPrice * 0.1;
+        }
+        if (asg.rating) {
+          totalRatingCount++;
+          totalRatingSum += asg.rating;
+        }
+      });
+
+      const avgRating = totalRatingCount > 0 ? Number((totalRatingSum / totalRatingCount).toFixed(1)) : 5.0;
+
+      return {
+        id: guide.id,
+        userId: guide.userId,
+        name: guide.user.name,
+        email: guide.user.email,
+        specialization: guide.specialization,
+        availability: guide.availability,
+        stats: {
+          activeBookings,
+          completedTours,
+          totalAssignments: guide.assignments.length,
+          totalEarnings: Number(totalEarnings.toFixed(2)),
+          rating: avgRating,
+        },
+      };
+    });
+
+    return res.json(formattedGuides);
+  } catch (error) {
+    console.error('Admin list guides error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Create a new tour guide
+router.post('/guides', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { name, email, password, specialization, availability } = req.body;
+
+    if (!name || !email || !password || !specialization) {
+      return res.status(400).json({ message: 'Name, email, password, and specialization are required' });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'TOUR_GUIDE',
+        },
+      });
+
+      const guide = await tx.tourGuide.create({
+        data: {
+          userId: user.id,
+          specialization,
+          availability: availability !== undefined ? availability : true,
+        },
+      });
+
+      return { user, guide };
+    });
+
+    return res.status(201).json({
+      message: 'Tour guide created successfully',
+      guide: {
+        id: result.guide.id,
+        userId: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        specialization: result.guide.specialization,
+        availability: result.guide.availability,
+      },
+    });
+  } catch (error) {
+    console.error('Admin create guide error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update tour guide
+router.put('/guides/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, email, specialization, availability } = req.body;
+
+    const guide = await prisma.tourGuide.findUnique({
+      where: { id },
+    });
+
+    if (!guide) {
+      return res.status(404).json({ message: 'Tour guide not found' });
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: guide.userId },
+        data: {
+          name: name !== undefined ? name : undefined,
+          email: email !== undefined ? email : undefined,
+        },
+      });
+
+      const updatedGuide = await tx.tourGuide.update({
+        where: { id },
+        data: {
+          specialization: specialization !== undefined ? specialization : undefined,
+          availability: availability !== undefined ? availability : undefined,
+        },
+      });
+
+      return { user: updatedUser, guide: updatedGuide };
+    });
+
+    return res.json({
+      message: 'Tour guide updated successfully',
+      guide: {
+        id: updated.guide.id,
+        userId: updated.user.id,
+        name: updated.user.name,
+        email: updated.user.email,
+        specialization: updated.guide.specialization,
+        availability: updated.guide.availability,
+      },
+    });
+  } catch (error) {
+    console.error('Admin update guide error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete tour guide
+router.delete('/guides/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const guide = await prisma.tourGuide.findUnique({
+      where: { id },
+    });
+
+    if (!guide) {
+      return res.status(404).json({ message: 'Tour guide not found' });
+    }
+
+    // Deleting the User automatically cascades and deletes the TourGuide because of schema relations
+    await prisma.user.delete({
+      where: { id: guide.userId },
+    });
+
+    return res.json({ message: 'Tour guide deleted successfully' });
+  } catch (error) {
+    console.error('Admin delete guide error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Reassign a booking's guide assignment
+router.put('/assignments/reassign', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { bookingId, guideId } = req.body;
+
+    if (!bookingId) {
+      return res.status(400).json({ message: 'Booking ID is required' });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if we are unassigning (guideId is null or empty)
+    if (!guideId) {
+      // Remove existing assignment if any
+      await prisma.guideAssignment.deleteMany({
+        where: { bookingId },
+      });
+      return res.json({ message: 'Booking unassigned successfully' });
+    }
+
+    const guide = await prisma.tourGuide.findUnique({
+      where: { id: guideId },
+    });
+
+    if (!guide) {
+      return res.status(404).json({ message: 'Tour guide not found' });
+    }
+
+    // Check if assignment already exists
+    const existingAssignment = await prisma.guideAssignment.findUnique({
+      where: { bookingId },
+    });
+
+    let assignment;
+    if (existingAssignment) {
+      assignment = await prisma.guideAssignment.update({
+        where: { bookingId },
+        data: {
+          guideId,
+          status: 'PENDING', // reset to pending so new guide has to accept/reject
+        },
+      });
+    } else {
+      assignment = await prisma.guideAssignment.create({
+        data: {
+          bookingId,
+          guideId,
+          status: 'PENDING',
+        },
+      });
+    }
+
+    return res.json({
+      message: 'Guide reassigned successfully',
+      assignment,
+    });
+  } catch (error) {
+    console.error('Admin reassign guide error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });

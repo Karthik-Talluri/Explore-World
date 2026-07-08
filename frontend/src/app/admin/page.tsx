@@ -14,6 +14,8 @@ interface Booking {
   invoiceId: string;
   user: { name: string; email: string };
   package: { name: string };
+  pickupLocation?: string;
+  guideAssignment?: any;
 }
 
 interface Stats {
@@ -55,6 +57,22 @@ interface Review {
   package: { name: string };
 }
 
+interface TourGuide {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  specialization: string;
+  availability: boolean;
+  stats: {
+    activeBookings: number;
+    completedTours: number;
+    totalAssignments: number;
+    totalEarnings: number;
+    rating: number;
+  };
+}
+
 export default function AdminPage() {
   const { apiUrl, token, user } = useApp();
   const router = useRouter();
@@ -65,11 +83,22 @@ export default function AdminPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
 
+  // Tour guide management states
+  const [guides, setGuides] = useState<TourGuide[]>([]);
+  const [allBookings, setAllBookings] = useState<any[]>([]);
+  const [guideSubTab, setGuideSubTab] = useState<'list' | 'create'>('list');
+  const [guideName, setGuideName] = useState('');
+  const [guideEmail, setGuideEmail] = useState('');
+  const [guidePassword, setGuidePassword] = useState('');
+  const [guideSpecialization, setGuideSpecialization] = useState('');
+  const [guideAvailability, setGuideAvailability] = useState(true);
+  const [editingGuide, setEditingGuide] = useState<TourGuide | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Forms control tabs
-  const [adminTab, setAdminTab] = useState<'stats' | 'catalog' | 'reviews' | 'inquiries'>('stats');
+  const [adminTab, setAdminTab] = useState<'stats' | 'catalog' | 'reviews' | 'inquiries' | 'guides'>('stats');
   const [activeForm, setActiveForm] = useState<'create' | 'list'>('list');
 
   // New package Form State
@@ -134,6 +163,26 @@ export default function AdminPage() {
     } catch (err) {}
   };
 
+  const fetchGuides = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/guides`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setGuides(data);
+    } catch (err) {}
+  };
+
+  const fetchAllBookings = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/bookings`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setAllBookings(data);
+    } catch (err) {}
+  };
+
   const fetchAllData = async () => {
     setLoading(true);
     setError(null);
@@ -141,7 +190,9 @@ export default function AdminPage() {
       await Promise.all([
         fetchAdminStats(),
         fetchPackages(),
-        fetchReviewsAndInquiries()
+        fetchReviewsAndInquiries(),
+        fetchGuides(),
+        fetchAllBookings()
       ]);
     } catch (err: any) {
       setError(err.message);
@@ -235,6 +286,96 @@ export default function AdminPage() {
     } catch (err) {}
   };
 
+  const handleCreateGuide = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guideName || !guideEmail || !guidePassword || !guideSpecialization) return;
+
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/guides`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: guideName,
+          email: guideEmail,
+          password: guidePassword,
+          specialization: guideSpecialization,
+          availability: guideAvailability,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Guide creation failed');
+      alert(`Tour Guide ${guideName} registered successfully!`);
+      
+      // Reset form
+      setGuideName('');
+      setGuideEmail('');
+      setGuidePassword('');
+      setGuideSpecialization('');
+      setGuideAvailability(true);
+      setGuideSubTab('list');
+      fetchGuides();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleUpdateGuide = async (guideId: string, payload: any) => {
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/guides/${guideId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('Guide update failed');
+      fetchGuides();
+      setEditingGuide(null);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteGuide = async (guideId: string) => {
+    if (!confirm('Are you sure you want to permanently delete this tour guide? The associated user account will also be deleted.')) return;
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/guides/${guideId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error('Guide deletion failed');
+      fetchGuides();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleReassignBooking = async (bookingId: string, guideId: string) => {
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/assignments/reassign`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ bookingId, guideId }),
+      });
+
+      if (!res.ok) throw new Error('Manual reassignment failed');
+      alert('Guide assignment updated successfully.');
+      fetchAllBookings();
+      fetchGuides();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   const handleDeleteReview = async (revId: string) => {
     if (!confirm('Delete this user review?')) return;
     try {
@@ -281,6 +422,7 @@ export default function AdminPage() {
           { label: 'Packages inventory', value: 'catalog' },
           { label: 'Reviews moderation', value: 'reviews' },
           { label: 'Customer Inquiries', value: 'inquiries' },
+          { label: 'Tour Guides', value: 'guides' },
         ].map((tab) => (
           <button
             key={tab.value}
@@ -674,6 +816,261 @@ export default function AdminPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {/* TOUR GUIDES TAB */}
+          {adminTab === 'guides' && (
+            <div className="space-y-6">
+              {/* Inner tab selectors */}
+              <div className="flex space-x-3 border-b border-border/20 pb-3">
+                <button
+                  onClick={() => setGuideSubTab('list')}
+                  className={`text-2xs font-bold uppercase tracking-wider pb-1 border-b-2 ${
+                    guideSubTab === 'list' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'
+                  }`}
+                >
+                  List & Manage Guides
+                </button>
+                <button
+                  onClick={() => setGuideSubTab('create')}
+                  className={`text-2xs font-bold uppercase tracking-wider pb-1 border-b-2 flex items-center space-x-1 ${
+                    guideSubTab === 'create' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'
+                  }`}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span>Register Tour Guide</span>
+                </button>
+              </div>
+
+              {guideSubTab === 'create' ? (
+                /* CREATE GUIDE FORM */
+                <form onSubmit={handleCreateGuide} className="glass rounded-2xl p-6 border border-border/60 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs max-w-xl">
+                  <div className="sm:col-span-2">
+                    <h3 className="font-bold text-sm text-foreground">Register New Tour Guide</h3>
+                    <p className="text-3xs text-muted-foreground">Creates a user account with role TOUR_GUIDE and links their credentials.</p>
+                  </div>
+                  <div>
+                    <label className="block text-3xs font-bold uppercase text-muted-foreground mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Alexander Guide"
+                      value={guideName}
+                      onChange={(e) => setGuideName(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-foreground focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-3xs font-bold uppercase text-muted-foreground mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="alexander@exploreworld.com"
+                      value={guideEmail}
+                      onChange={(e) => setGuideEmail(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-foreground focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-3xs font-bold uppercase text-muted-foreground mb-1">Security Password</label>
+                    <input
+                      type="password"
+                      required
+                      placeholder="••••••••"
+                      value={guidePassword}
+                      onChange={(e) => setGuidePassword(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-foreground focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-3xs font-bold uppercase text-muted-foreground mb-1">Specialization (Destinations)</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Kashmir, Rajasthan, Dubai"
+                      value={guideSpecialization}
+                      onChange={(e) => setGuideSpecialization(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-foreground focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-4 sm:col-span-2">
+                    <input
+                      type="checkbox"
+                      id="guideAvailability"
+                      checked={guideAvailability}
+                      onChange={(e) => setGuideAvailability(e.target.checked)}
+                      className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="guideAvailability" className="text-3xs font-bold uppercase text-muted-foreground">
+                      Mark as Active & Available Immediately
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="sm:col-span-2 rounded-xl bg-secondary py-2.5 text-xs font-bold text-slate-950 flex items-center justify-center space-x-1 shadow hover:brightness-110 mt-2"
+                  >
+                    <PlusCircle className="h-4 w-4" />
+                    <span>Create Tour Guide Account</span>
+                  </button>
+                </form>
+              ) : (
+                /* GUIDE MANAGEMENT LIST */
+                <div className="space-y-8">
+                  {/* Guides Table */}
+                  <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-muted/40 border-b border-border/80 text-muted-foreground font-semibold">
+                          <th className="p-3">Tour Guide Name</th>
+                          <th className="p-3">Email Address</th>
+                          <th className="p-3">Specializations</th>
+                          <th className="p-3 text-center">Active Bookings</th>
+                          <th className="p-3 text-center">Avg Rating</th>
+                          <th className="p-3 text-center">Earnings</th>
+                          <th className="p-3 text-center">Availability</th>
+                          <th className="p-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {guides.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} className="p-4 text-center text-muted-foreground italic">
+                              No tour guides registered on the platform yet.
+                            </td>
+                          </tr>
+                        ) : (
+                          guides.map((g) => (
+                            <tr key={g.id} className="border-b border-border/40 last:border-b-0 hover:bg-muted/20">
+                              <td className="p-3 font-semibold text-foreground">
+                                {editingGuide?.id === g.id ? (
+                                  <input
+                                    type="text"
+                                    defaultValue={g.name}
+                                    onBlur={(e) => handleUpdateGuide(g.id, { name: e.target.value })}
+                                    className="border border-input rounded px-2 py-0.5 max-w-28 text-foreground"
+                                  />
+                                ) : (
+                                  g.name
+                                )}
+                              </td>
+                              <td className="p-3">
+                                {editingGuide?.id === g.id ? (
+                                  <input
+                                    type="email"
+                                    defaultValue={g.email}
+                                    onBlur={(e) => handleUpdateGuide(g.id, { email: e.target.value })}
+                                    className="border border-input rounded px-2 py-0.5 max-w-36 text-foreground"
+                                  />
+                                ) : (
+                                  g.email
+                                )}
+                              </td>
+                              <td className="p-3 font-mono font-medium">
+                                {editingGuide?.id === g.id ? (
+                                  <input
+                                    type="text"
+                                    defaultValue={g.specialization}
+                                    onBlur={(e) => handleUpdateGuide(g.id, { specialization: e.target.value })}
+                                    className="border border-input rounded px-2 py-0.5 max-w-36 text-foreground"
+                                  />
+                                ) : (
+                                  g.specialization
+                                )}
+                              </td>
+                              <td className="p-3 text-center font-bold text-foreground">{g.stats.activeBookings}</td>
+                              <td className="p-3 text-center font-bold text-amber-500">★ {g.stats.rating}</td>
+                              <td className="p-3 text-center font-bold text-secondary">${g.stats.totalEarnings}</td>
+                              <td className="p-3 text-center">
+                                <button
+                                  onClick={() => handleUpdateGuide(g.id, { availability: !g.availability })}
+                                  className={`rounded px-2 py-0.5 text-4xs font-bold uppercase transition-all ${
+                                    g.availability ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                  }`}
+                                >
+                                  {g.availability ? 'Available' : 'Unavailable'}
+                                </button>
+                              </td>
+                              <td className="p-3 text-right space-x-2">
+                                <button
+                                  onClick={() => setEditingGuide(editingGuide?.id === g.id ? null : g)}
+                                  className="rounded bg-accent hover:bg-muted border border-border px-2.5 py-1 text-3xs font-semibold"
+                                >
+                                  {editingGuide?.id === g.id ? 'Done' : 'Edit'}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteGuide(g.id)}
+                                  className="rounded bg-destructive/10 hover:bg-destructive/20 px-2 py-1 text-3xs font-bold text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 inline" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Manual Assignment Management Panel */}
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-foreground">Manual Tour Guide Assignment Controller</h3>
+                    <p className="text-xs text-muted-foreground">Assign or reassign guides manually for all active platform bookings.</p>
+                    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-muted/40 border-b border-border/80 text-muted-foreground font-semibold">
+                            <th className="p-3">Invoice ID</th>
+                            <th className="p-3">Traveler Details</th>
+                            <th className="p-3">Tour Package Destination</th>
+                            <th className="p-3">Travel Date</th>
+                            <th className="p-3">Pickup Location</th>
+                            <th className="p-3">Assigned Escort Guide</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allBookings.filter(b => b.status === 'CONFIRMED').length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="p-4 text-center text-muted-foreground italic">
+                                No active package bookings available for assignment.
+                              </td>
+                            </tr>
+                          ) : (
+                            allBookings.filter(b => b.status === 'CONFIRMED').map((b) => (
+                              <tr key={b.id} className="border-b border-border/40 last:border-b-0 hover:bg-muted/20">
+                                <td className="p-3 font-mono font-bold">{b.invoiceId}</td>
+                                <td className="p-3">
+                                  <span className="font-semibold block">{b.user.name}</span>
+                                  <span className="text-3xs text-muted-foreground block">{b.user.email}</span>
+                                </td>
+                                <td className="p-3 font-semibold text-primary dark:text-secondary">{b.package.name}</td>
+                                <td className="p-3">{new Date(b.travelDate).toLocaleDateString()}</td>
+                                <td className="p-3 font-semibold text-muted-foreground">{b.pickupLocation}</td>
+                                <td className="p-3">
+                                  <select
+                                    value={b.guideAssignment?.guideId || ''}
+                                    onChange={(e) => handleReassignBooking(b.id, e.target.value)}
+                                    className="rounded-lg border border-input bg-background/50 px-2 py-1 text-3xs text-foreground focus:outline-none"
+                                  >
+                                    <option value="">-- Unassigned / None --</option>
+                                    {guides.map((g) => (
+                                      <option key={g.id} value={g.id}>
+                                        {g.name} ({g.specialization})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+              )}
             </div>
           )}
 

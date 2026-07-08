@@ -8,7 +8,7 @@ const router = Router();
 router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    const { packageId, travelDate, travelersCount, roomType, specialRequests, paymentMethodId } = req.body;
+    const { packageId, travelDate, travelersCount, roomType, specialRequests, pickupLocation, paymentMethodId } = req.body;
 
     if (!userId || !packageId || !travelDate || !travelersCount || !roomType) {
       return res.status(400).json({ message: 'All booking fields are required' });
@@ -44,6 +44,7 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
         travelersCount: Number(travelersCount),
         roomType,
         specialRequests: specialRequests || '',
+        pickupLocation: pickupLocation || 'Hotel Lobby / Airport',
         totalPrice,
         status: paymentStatus === 'PAID' ? 'CONFIRMED' : 'PENDING',
         paymentStatus,
@@ -53,6 +54,45 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
         package: true,
       }
     });
+
+    // Auto-assignment logic
+    if (booking.status === 'CONFIRMED') {
+      const guides = await prisma.tourGuide.findMany({
+        where: { availability: true },
+        include: {
+          assignments: {
+            where: {
+              status: { in: ['PENDING', 'ACCEPTED'] }
+            }
+          }
+        }
+      });
+
+      // Filter guides specializing in this destination
+      const matchedGuides = guides.filter((g) => {
+        const specList = g.specialization.toLowerCase().split(',').map(s => s.trim());
+        const dest = pkg.destination.toLowerCase();
+        return specList.includes(dest) || g.specialization.toLowerCase().includes(dest);
+      });
+
+      if (matchedGuides.length > 0) {
+        // Sort by fewest active assignments
+        matchedGuides.sort((a, b) => a.assignments.length - b.assignments.length);
+        const selectedGuide = matchedGuides[0];
+
+        await prisma.guideAssignment.create({
+          data: {
+            bookingId: booking.id,
+            guideId: selectedGuide.id,
+            status: 'PENDING',
+          }
+        });
+
+        console.log(`Auto-assigned guide ${selectedGuide.id} to booking ${booking.id}`);
+      } else {
+        console.log(`No available guides found for destination ${pkg.destination}`);
+      }
+    }
 
     // Console Log Simulated Email Confirmation
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -94,7 +134,18 @@ router.get('/history', authenticateJWT, async (req: AuthenticatedRequest, res: R
 
     const bookings = await prisma.booking.findMany({
       where: { userId },
-      include: { package: true },
+      include: {
+        package: true,
+        guideAssignment: {
+          include: {
+            guide: {
+              include: {
+                user: { select: { name: true, email: true } }
+              }
+            }
+          }
+        }
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -154,6 +205,53 @@ router.post('/cancel/:id', authenticateJWT, async (req: AuthenticatedRequest, re
     });
   } catch (error) {
     console.error('Cancel booking error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Rate tour guide for a completed assignment
+router.post('/:id/rate-guide', authenticateJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const bookingId = req.params.id;
+    const { rating, feedback } = req.body;
+
+    if (!userId || !rating) {
+      return res.status(400).json({ message: 'Rating is required' });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { guideAssignment: true }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    if (booking.userId !== userId) {
+      return res.status(403).json({ message: 'Forbidden: You cannot rate this guide' });
+    }
+
+    if (!booking.guideAssignment) {
+      return res.status(400).json({ message: 'No tour guide assigned to this booking' });
+    }
+
+    // Update assignment rating and feedback
+    const updatedAssignment = await prisma.guideAssignment.update({
+      where: { id: booking.guideAssignment.id },
+      data: {
+        rating: Number(rating),
+        feedback: feedback || '',
+      }
+    });
+
+    return res.json({
+      message: 'Tour guide rated successfully',
+      assignment: updatedAssignment,
+    });
+  } catch (error) {
+    console.error('Rate guide error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
