@@ -111,6 +111,28 @@ async function seedDatabase() {
         });
       }
 
+      // Seed second tour guide if missing
+      const guide2Exists = await prisma.user.findUnique({ where: { email: 'guide2@exploreworld.com' } });
+      if (!guide2Exists) {
+        const hashedGuidePassword = await bcrypt.hash('guide123', 10);
+        const guide2User = await prisma.user.create({
+          data: {
+            email: 'guide2@exploreworld.com',
+            name: 'Alex Guide',
+            password: hashedGuidePassword,
+            role: 'GUIDE',
+          },
+        });
+
+        await prisma.tourGuide.create({
+          data: {
+            userId: guide2User.id,
+            specialization: 'Kashmir, Kerala',
+            availability: true,
+          },
+        });
+      }
+
       // Seed Initial Tour Packages
       const initialPackages = [
         {
