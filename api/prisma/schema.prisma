@@ -99,6 +99,8 @@ model TourGuide {
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialization String            // Comma-separated list of destinations, e.g. "Kashmir, Rajasthan"
   availability   Boolean           @default(true)
+  status         String            @default("APPROVED") // "PENDING", "APPROVED", "REJECTED"
+  phone          String            @default("+1-555-0199")
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   assignments    GuideAssignment[]

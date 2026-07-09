@@ -40,7 +40,7 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
     let selectedGuide = null;
     if (paymentStatus === 'PAID') {
       const guides = await prisma.tourGuide.findMany({
-        where: { availability: true },
+        where: { availability: true, status: 'APPROVED' },
         include: {
           assignments: {
             include: {

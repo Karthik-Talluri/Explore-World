@@ -64,6 +64,8 @@ interface TourGuide {
   email: string;
   specialization: string;
   availability: boolean;
+  status: string;
+  phone?: string;
   stats: {
     activeBookings: number;
     completedTours: number;
@@ -85,8 +87,9 @@ export default function AdminPage() {
 
   // Tour guide management states
   const [guides, setGuides] = useState<TourGuide[]>([]);
+  const [travellers, setTravellers] = useState<any[]>([]);
   const [allBookings, setAllBookings] = useState<any[]>([]);
-  const [guideSubTab, setGuideSubTab] = useState<'list' | 'create'>('list');
+  const [guideSubTab, setGuideSubTab] = useState<'list' | 'create' | 'pending'>('list');
   const [guideName, setGuideName] = useState('');
   const [guideEmail, setGuideEmail] = useState('');
   const [guidePassword, setGuidePassword] = useState('');
@@ -104,7 +107,7 @@ export default function AdminPage() {
   const [filterGuide, setFilterGuide] = useState('');
 
   // Forms control tabs
-  const [adminTab, setAdminTab] = useState<'stats' | 'catalog' | 'reviews' | 'inquiries' | 'guides' | 'bookings'>('stats');
+  const [adminTab, setAdminTab] = useState<'stats' | 'catalog' | 'reviews' | 'inquiries' | 'guides' | 'bookings' | 'travellers'>('stats');
   const [activeForm, setActiveForm] = useState<'create' | 'list'>('list');
 
   // New package Form State
@@ -179,6 +182,16 @@ export default function AdminPage() {
     } catch (err) {}
   };
 
+  const fetchTravellers = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/travellers`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setTravellers(data);
+    } catch (err) {}
+  };
+
   const fetchAllBookings = async () => {
     try {
       const query = new URLSearchParams();
@@ -204,6 +217,7 @@ export default function AdminPage() {
         fetchPackages(),
         fetchReviewsAndInquiries(),
         fetchGuides(),
+        fetchTravellers(),
         fetchAllBookings()
       ]);
     } catch (err: any) {
@@ -248,6 +262,48 @@ export default function AdminPage() {
       } else {
         const data = await res.json();
         throw new Error(data.message || 'Failed to cancel booking');
+      }
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleUpdateGuideStatus = async (guideId: string, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/guides/${guideId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        alert(`Guide registration status updated to ${status.toLowerCase()} successfully.`);
+        fetchGuides();
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to update guide status');
+      }
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteTraveller = async (travellerId: string) => {
+    if (!confirm('Are you sure you want to delete this traveller user account? This will remove all their records.')) return;
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/travellers/${travellerId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert('Traveller deleted successfully.');
+        fetchTravellers();
+        fetchAdminStats();
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to delete traveller');
       }
     } catch (err: any) {
       alert(err.message);
@@ -459,11 +515,12 @@ export default function AdminPage() {
       </div>
 
       {/* Tab controls */}
-      <div className="flex space-x-4 border-b border-border/20 pb-3">
+      <div className="flex space-x-4 border-b border-border/20 pb-3 overflow-x-auto">
         {[
           { label: 'Stats overview', value: 'stats' },
           { label: 'Bookings Manager', value: 'bookings' },
           { label: 'Packages inventory', value: 'catalog' },
+          { label: 'Manage Travellers', value: 'travellers' },
           { label: 'Reviews moderation', value: 'reviews' },
           { label: 'Customer Inquiries', value: 'inquiries' },
           { label: 'Tour Guides', value: 'guides' },
@@ -492,6 +549,61 @@ export default function AdminPage() {
         </div>
       ) : (
         <>
+          {/* TRAVELLERS MANAGER TAB */}
+          {adminTab === 'travellers' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex items-center justify-between border-b border-border/10 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-foreground font-sans">Manage Registered Travellers</h3>
+                  <p className="text-3xs text-muted-foreground">List user profile data and billing totals for active customer accounts.</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-muted/40 border-b border-border/80 text-muted-foreground font-semibold">
+                      <th className="p-3">Traveller Name</th>
+                      <th className="p-3">Email Address</th>
+                      <th className="p-3">Signed Up Date</th>
+                      <th className="p-3 text-center">Total Bookings</th>
+                      <th className="p-3 text-center">Total Spent</th>
+                      <th className="p-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {travellers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-4 text-center text-slate-500 italic">
+                          No travellers registered on the platform yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      travellers.map((t) => (
+                        <tr key={t.id} className="border-b border-border/40 last:border-b-0 hover:bg-muted/20">
+                          <td className="p-3 font-semibold text-foreground">{t.name}</td>
+                          <td className="p-3 text-muted-foreground">{t.email}</td>
+                          <td className="p-3 text-muted-foreground">{new Date(t.createdAt).toLocaleDateString()}</td>
+                          <td className="p-3 text-center font-bold text-foreground">{t.bookingsCount}</td>
+                          <td className="p-3 text-center font-bold text-secondary">${t.totalSpent}</td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => handleDeleteTraveller(t.id)}
+                              className="rounded bg-destructive/10 hover:bg-destructive/20 px-2.5 py-1 text-3xs font-bold text-destructive"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 inline mr-1" />
+                              Delete Account
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* BOOKINGS MANAGER TAB */}
           {adminTab === 'bookings' && (
             <div className="space-y-6 animate-fade-in">
@@ -539,7 +651,7 @@ export default function AdminPage() {
                     className="w-full rounded-lg border border-border bg-slate-950 px-3 py-1.5 text-foreground focus:outline-none"
                   >
                     <option value="">All Guides</option>
-                    {guides.map((g) => (
+                    {guides.filter(g => g.status === 'APPROVED').map((g) => (
                       <option key={g.id} value={g.id}>{g.name}</option>
                     ))}
                   </select>
@@ -604,7 +716,7 @@ export default function AdminPage() {
                               className="rounded-lg border border-border bg-slate-950 px-2.5 py-1 text-3xs text-foreground focus:outline-none disabled:opacity-50 font-sans"
                             >
                               <option value="">-- Unassigned --</option>
-                              {guides.map((g) => (
+                              {guides.filter(g => g.status === 'APPROVED').map((g) => (
                                 <option key={g.id} value={g.id}>
                                   {g.name} ({g.specialization})
                                 </option>
@@ -674,6 +786,107 @@ export default function AdminPage() {
                     <rect x="25" y={30 - Math.max(stats.summary.breakdown.international * 6, 4)} width="10" height={Math.max(stats.summary.breakdown.international * 6, 4)} fill="#c5a059" rx="1" />
                   </svg>
                 </div>
+              </div>
+
+              {/* Payments Monitoring & Analytics Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Analytics card 1: Destination Distribution */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h4 className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Reservations by Destination</h4>
+                  {allBookings.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic">No bookings recorded yet.</p>
+                  ) : (
+                    <div className="space-y-3.5 pt-2">
+                      {Object.entries(
+                        allBookings.reduce((acc: any, b: any) => {
+                          const dest = b.package.destination;
+                          acc[dest] = (acc[dest] || 0) + 1;
+                          return acc;
+                        }, {})
+                      )
+                        .sort((a: any, b: any) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([dest, count]: any) => {
+                          const percent = Math.min((count / allBookings.length) * 100, 100);
+                          return (
+                            <div key={dest} className="space-y-1 text-2xs">
+                              <div className="flex justify-between font-semibold">
+                                <span className="text-foreground">{dest}</span>
+                                <span className="text-secondary">{count} tours</span>
+                              </div>
+                              <div className="w-full bg-slate-900/60 rounded-full h-1.5 overflow-hidden border border-border/10">
+                                <div className="bg-secondary h-full rounded-full" style={{ width: `${percent}%` }}></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Analytics card 2: Payments Audit Monitor */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h4 className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Payments & Transaction Monitor</h4>
+                  <div className="space-y-3 pt-2 text-2xs">
+                    <div className="flex justify-between border-b border-border/10 pb-2">
+                      <span className="text-slate-400">Total Funds Collected</span>
+                      <span className="font-bold text-emerald-500">
+                        ${allBookings.filter(b => b.paymentStatus === 'PAID').reduce((sum, b) => sum + b.totalPrice, 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/10 pb-2">
+                      <span className="text-slate-400">Pending Payments Value</span>
+                      <span className="font-bold text-amber-500">
+                        ${allBookings.filter(b => b.paymentStatus === 'PENDING').reduce((sum, b) => sum + b.totalPrice, 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/10 pb-2">
+                      <span className="text-slate-400">Cancelled / Refunded</span>
+                      <span className="font-bold text-rose-500">
+                        ${allBookings.filter(b => b.status === 'CANCELLED').reduce((sum, b) => sum + b.totalPrice, 0).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1 font-bold">
+                      <span className="text-white">Active Payment Ratio</span>
+                      <span className="text-secondary">
+                        {allBookings.length > 0
+                          ? `${((allBookings.filter(b => b.paymentStatus === 'PAID').length / allBookings.length) * 100).toFixed(0)}% Successful`
+                          : '100%'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Analytics card 3: Platform Staffing Overview */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h4 className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">Platform Directory Overview</h4>
+                  <div className="space-y-3 pt-2 text-2xs">
+                    <div className="flex justify-between border-b border-border/10 pb-2">
+                      <span className="text-slate-400">Total Registered Travelers</span>
+                      <span className="font-bold text-white">{travellers.length} accounts</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/10 pb-2">
+                      <span className="text-slate-400">Active Approved Guides</span>
+                      <span className="font-bold text-white">
+                        {guides.filter(g => g.status === 'APPROVED').length} guides
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/10 pb-2">
+                      <span className="text-slate-400">Online Available Guides</span>
+                      <span className="font-bold text-emerald-500">
+                        {guides.filter(g => g.status === 'APPROVED' && g.availability).length} online
+                      </span>
+                    </div>
+                    <div className="flex justify-between pt-1">
+                      <span className="text-slate-400">Pending Guide Applications</span>
+                      <span className={`font-bold ${guides.filter(g => g.status === 'PENDING').length > 0 ? 'text-amber-500 animate-pulse' : 'text-slate-400'}`}>
+                        {guides.filter(g => g.status === 'PENDING').length} applications
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               {/* Bookings log table */}
@@ -1038,6 +1251,19 @@ export default function AdminPage() {
                   <PlusCircle className="h-3.5 w-3.5" />
                   <span>Register Tour Guide</span>
                 </button>
+                <button
+                  onClick={() => setGuideSubTab('pending')}
+                  className={`text-2xs font-bold uppercase tracking-wider pb-1 border-b-2 flex items-center space-x-1.5 ${
+                    guideSubTab === 'pending' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'
+                  }`}
+                >
+                  <span>Pending Registrations</span>
+                  {guides.filter(g => g.status === 'PENDING').length > 0 && (
+                    <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-4xs font-bold text-slate-950">
+                      {guides.filter(g => g.status === 'PENDING').length}
+                    </span>
+                  )}
+                </button>
               </div>
 
               {guideSubTab === 'create' ? (
@@ -1112,6 +1338,61 @@ export default function AdminPage() {
                     <span>Create Tour Guide Account</span>
                   </button>
                 </form>
+              ) : guideSubTab === 'pending' ? (
+                /* PENDING REGISTRATIONS LIST */
+                <div className="space-y-4 animate-fade-in">
+                  <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-muted/40 border-b border-border/80 text-muted-foreground font-semibold">
+                          <th className="p-3">Tour Guide Name</th>
+                          <th className="p-3">Email Address</th>
+                          <th className="p-3">Specializations</th>
+                          <th className="p-3">Contact Phone</th>
+                          <th className="p-3 text-center">Registration Status</th>
+                          <th className="p-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {guides.filter(g => g.status === 'PENDING').length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="p-4 text-center text-muted-foreground italic">
+                              No pending guide registrations to moderate.
+                            </td>
+                          </tr>
+                        ) : (
+                          guides.filter(g => g.status === 'PENDING').map((g) => (
+                            <tr key={g.id} className="border-b border-border/40 last:border-b-0 hover:bg-muted/20">
+                              <td className="p-3 font-semibold text-foreground">{g.name}</td>
+                              <td className="p-3">{g.email}</td>
+                              <td className="p-3 font-mono font-medium">{g.specialization}</td>
+                              <td className="p-3 font-mono">{g.phone || '+1-555-0199'}</td>
+                              <td className="p-3 text-center">
+                                <span className="rounded bg-amber-500/10 text-amber-500 px-2 py-0.5 text-4xs font-bold uppercase">
+                                  PENDING REVIEW
+                                </span>
+                              </td>
+                              <td className="p-3 text-right space-x-2">
+                                <button
+                                  onClick={() => handleUpdateGuideStatus(g.id, 'APPROVED')}
+                                  className="rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 px-2.5 py-1 text-3xs font-bold transition-colors animate-pulse"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateGuideStatus(g.id, 'REJECTED')}
+                                  className="rounded bg-destructive/10 hover:bg-destructive/20 text-destructive px-2.5 py-1 text-3xs font-bold transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               ) : (
                 /* GUIDE MANAGEMENT LIST */
                 <div className="space-y-8">
@@ -1131,14 +1412,14 @@ export default function AdminPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {guides.length === 0 ? (
+                        {guides.filter(g => g.status === 'APPROVED').length === 0 ? (
                           <tr>
                             <td colSpan={8} className="p-4 text-center text-muted-foreground italic">
-                              No tour guides registered on the platform yet.
+                              No approved tour guides registered on the platform yet.
                             </td>
                           </tr>
                         ) : (
-                          guides.map((g) => (
+                          guides.filter(g => g.status === 'APPROVED').map((g) => (
                             <tr key={g.id} className="border-b border-border/40 last:border-b-0 hover:bg-muted/20">
                               <td className="p-3 font-semibold text-foreground">
                                 {editingGuide?.id === g.id ? (
@@ -1251,7 +1532,7 @@ export default function AdminPage() {
                                     className="rounded-lg border border-input bg-background/50 px-2 py-1 text-3xs text-foreground focus:outline-none"
                                   >
                                     <option value="">-- Unassigned / None --</option>
-                                    {guides.map((g) => (
+                                    {guides.filter(g => g.status === 'APPROVED').map((g) => (
                                       <option key={g.id} value={g.id}>
                                         {g.name} ({g.specialization})
                                       </option>

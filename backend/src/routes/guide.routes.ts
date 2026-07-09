@@ -287,7 +287,7 @@ async function assignNextGuide(bookingId: string) {
 
     // Find all guides who are online (availability = true)
     const guides = await prisma.tourGuide.findMany({
-      where: { availability: true },
+      where: { availability: true, status: 'APPROVED' },
       include: {
         assignments: {
           include: {

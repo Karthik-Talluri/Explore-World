@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Compass, Sparkles, ShieldCheck, Landmark, CheckSquare, MessageSquare, 
   PhoneCall, Globe, Map, User, CheckCircle2, ArrowRight
@@ -67,8 +68,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* DUAL ROLE SELECTION CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto pt-4">
+          {/* TRIPLE ROLE SELECTION CARDS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto pt-4">
             
             {/* Card 1: Traveller */}
             <div 
@@ -142,6 +143,50 @@ export default function Home() {
 
               <button className="w-full mt-4 flex items-center justify-center space-x-2 rounded-xl border border-amber-500/20 hover:bg-amber-500/10 py-3 text-xs font-bold text-amber-500 transition-all">
                 <span>Continue as Tour Guide</span>
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+              <div className="text-center pt-2">
+                <span className="text-[10px] text-slate-500">New guide? </span>
+                <Link href="/guide-register" className="text-[10px] text-amber-500 font-bold hover:underline" onClick={(e) => e.stopPropagation()}>
+                  Submit Registration Request
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 3: Admin */}
+            <div 
+              onClick={() => router.push('/admin-login')}
+              className="group relative rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-md p-8 text-left space-y-6 hover:border-amber-500/30 transition-all duration-300 cursor-pointer shadow-2xl hover:-translate-y-1"
+            >
+              <div className="inline-flex rounded-2xl bg-amber-500/10 p-4 text-amber-500">
+                <ShieldCheck className="h-8 w-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white group-hover:text-amber-500 transition-colors">Admin Portal</h3>
+                <p className="text-2xs text-slate-400">Configure platform data, adjust packages, and assign guides.</p>
+              </div>
+
+              <ul className="space-y-2.5 border-t border-white/5 pt-4 text-xs text-slate-300">
+                <li className="flex items-center space-x-2">
+                  <CheckSquare className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span>Manage packages & catalogs</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckSquare className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span>Track payment transactions</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckSquare className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span>Reassign bookings manually</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckSquare className="h-4 w-4 text-amber-500 shrink-0" />
+                  <span>Moderate guide registrations</span>
+                </li>
+              </ul>
+
+              <button className="w-full mt-4 flex items-center justify-center space-x-2 rounded-xl border border-amber-500/20 hover:bg-amber-500/10 py-3 text-xs font-bold text-amber-500 transition-all">
+                <span>Continue as Admin</span>
                 <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>

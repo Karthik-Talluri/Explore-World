@@ -319,6 +319,8 @@ router.get('/guides', async (req: AuthenticatedRequest, res: Response) => {
         email: guide.user.email,
         specialization: guide.specialization,
         availability: guide.availability,
+        status: guide.status,
+        phone: guide.phone,
         stats: {
           activeBookings,
           completedTours,
@@ -367,6 +369,8 @@ router.post('/guides', async (req: AuthenticatedRequest, res: Response) => {
           userId: user.id,
           specialization,
           availability: availability !== undefined ? availability : true,
+          status: 'APPROVED',
+          phone: req.body.phone || '+1-555-0199',
         },
       });
 
@@ -504,6 +508,10 @@ router.put('/assignments/reassign', async (req: AuthenticatedRequest, res: Respo
       return res.status(404).json({ message: 'Tour guide not found' });
     }
 
+    if (guide.status !== 'APPROVED') {
+      return res.status(400).json({ message: 'Cannot assign a guide whose registration is not approved.' });
+    }
+
     // Check if assignment already exists
     const existingAssignment = await prisma.guideAssignment.findUnique({
       where: { bookingId },
@@ -576,6 +584,66 @@ router.put('/bookings/:id/cancel', async (req: AuthenticatedRequest, res: Respon
     return res.json({ message: 'Booking cancelled by admin successfully', booking: updated });
   } catch (error) {
     console.error('Admin cancel booking error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// List all travellers (users with role 'USER')
+router.get('/travellers', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const travellers = await prisma.user.findMany({
+      where: { role: 'USER' },
+      include: {
+        bookings: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formatted = travellers.map(t => ({
+      id: t.id,
+      name: t.name,
+      email: t.email,
+      createdAt: t.createdAt,
+      bookingsCount: t.bookings.length,
+      totalSpent: t.bookings.reduce((sum, b) => sum + b.totalPrice, 0)
+    }));
+
+    return res.json(formatted);
+  } catch (error) {
+    console.error('Admin list travellers error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete a traveller
+router.delete('/travellers/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    await prisma.user.delete({
+      where: { id: req.params.id }
+    });
+    return res.json({ message: 'Traveller deleted successfully' });
+  } catch (error) {
+    console.error('Admin delete traveller error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Approve or Reject a guide registration
+router.put('/guides/:id/status', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { status } = req.body;
+    if (!['APPROVED', 'REJECTED', 'PENDING'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const guide = await prisma.tourGuide.update({
+      where: { id: req.params.id },
+      data: { status }
+    });
+
+    return res.json({ message: `Guide registration ${status.toLowerCase()} successfully`, guide });
+  } catch (error) {
+    console.error('Admin update guide status error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });

@@ -166,4 +166,58 @@ router.get('/profile', authenticateJWT, async (req: AuthenticatedRequest, res: R
   }
 });
 
+// Guide Self-Registration
+router.post('/register-guide', async (req, res) => {
+  try {
+    const { email, password, name, specialization, phone } = req.body;
+
+    if (!email || !password || !name || !specialization) {
+      return res.status(400).json({ message: 'Email, password, name, and specialization are required' });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name,
+          role: 'GUIDE',
+        },
+      });
+
+      const guide = await tx.tourGuide.create({
+        data: {
+          userId: user.id,
+          specialization,
+          phone: phone || '+1-555-0199',
+          availability: true,
+          status: 'PENDING',
+        },
+      });
+
+      return { user, guide };
+    });
+
+    return res.status(201).json({
+      message: 'Guide registration request submitted successfully. Waiting for administrator approval.',
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Guide registration error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 export default router;
