@@ -9,7 +9,7 @@ import Footer from './Footer';
 export default function ClientLayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { token, user } = useApp();
+  const { token, user, logout } = useApp();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,13 +43,9 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
         router.push('/guide');
       }
       
-      // 2. Traveller users must never access guide pages
+      // 2. Traveller/Admin users must never access guide pages
       if (user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' && isGuideRoute) {
-        if (user.role === 'ADMIN') {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
+        logout();
       }
     }
   }, [token, user, pathname]);
