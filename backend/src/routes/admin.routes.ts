@@ -56,25 +56,84 @@ router.get('/stats', async (req: AuthenticatedRequest, res: Response) => {
   }
 });
 
-// List all bookings
+// List all bookings (with optional filters)
 router.get('/bookings', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    const { destination, date, guideId, status } = req.query;
+
+    const whereClause: any = {};
+
+    if (status) {
+      whereClause.status = status as string;
+    }
+
+    if (date) {
+      const filterDate = new Date(date as string);
+      if (!isNaN(filterDate.getTime())) {
+        const startOfDay = new Date(filterDate.setUTCHours(0, 0, 0, 0));
+        const endOfDay = new Date(filterDate.setUTCHours(23, 59, 59, 999));
+        whereClause.travelDate = {
+          gte: startOfDay,
+          lte: endOfDay,
+        };
+      }
+    }
+
+    if (destination) {
+      whereClause.package = {
+        destination: {
+          contains: destination as string,
+          mode: 'insensitive',
+        },
+      };
+    }
+
+    if (guideId) {
+      whereClause.guideAssignment = {
+        guideId: guideId as string,
+      };
+    }
+
     const bookings = await prisma.booking.findMany({
+      where: whereClause,
       include: {
-        user: { select: { name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
         package: true,
+        guideAssignment: {
+          include: {
+            guide: {
+              include: {
+                user: { select: { name: true, email: true } }
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    const formatted = bookings.map(b => ({
-      ...b,
-      package: {
-        ...b.package,
-        images: JSON.parse(b.package.images),
-        itinerary: JSON.parse(b.package.itinerary),
+    const formatted = bookings.map(b => {
+      let parsedImages = [];
+      let parsedItinerary = [];
+      try {
+        parsedImages = JSON.parse(b.package.images);
+      } catch (e) {
+        parsedImages = [b.package.images];
       }
-    }));
+      try {
+        parsedItinerary = JSON.parse(b.package.itinerary);
+      } catch (e) {
+        parsedItinerary = [];
+      }
+      return {
+        ...b,
+        package: {
+          ...b.package,
+          images: parsedImages,
+          itinerary: parsedItinerary,
+        }
+      };
+    });
 
     return res.json(formatted);
   } catch (error) {
@@ -430,6 +489,10 @@ router.put('/assignments/reassign', async (req: AuthenticatedRequest, res: Respo
       await prisma.guideAssignment.deleteMany({
         where: { bookingId },
       });
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: 'Waiting for Guide' }
+      });
       return res.json({ message: 'Booking unassigned successfully' });
     }
 
@@ -465,12 +528,54 @@ router.put('/assignments/reassign', async (req: AuthenticatedRequest, res: Respo
       });
     }
 
+    // Update booking status to Waiting for Guide Acceptance
+    await prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: 'Waiting for Guide Acceptance' }
+    });
+
     return res.json({
       message: 'Guide reassigned successfully',
       assignment,
     });
   } catch (error) {
     console.error('Admin reassign guide error:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Cancel a booking by Admin
+router.put('/bookings/:id/cancel', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const booking = await prisma.booking.findUnique({ where: { id } });
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    const currentSpecialRequests = booking.specialRequests || '';
+    const newSpecialRequests = currentSpecialRequests 
+      ? `${currentSpecialRequests} | Admin Cancellation: ${reason || 'No reason specified'}`
+      : `Admin Cancellation: ${reason || 'No reason specified'}`;
+
+    const updated = await prisma.booking.update({
+      where: { id },
+      data: {
+        status: 'CANCELLED',
+        specialRequests: newSpecialRequests
+      }
+    });
+
+    // Also set any guide assignment status to CANCELLED
+    await prisma.guideAssignment.updateMany({
+      where: { bookingId: id },
+      data: { status: 'CANCELLED' }
+    });
+
+    return res.json({ message: 'Booking cancelled by admin successfully', booking: updated });
+  } catch (error) {
+    console.error('Admin cancel booking error:', error);
     return res.status(500).json({ message: 'Internal server error' });
   }
 });

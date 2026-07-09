@@ -164,9 +164,9 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
     if (!guide) return;
 
     const assignmentId = req.params.id;
-    const { status } = req.body;
+    const { status, reason } = req.body;
 
-    if (!['ACCEPTED', 'REJECTED', 'STARTED', 'COMPLETED'].includes(status)) {
+    if (!['ACCEPTED', 'REJECTED', 'STARTED', 'COMPLETED', 'CANCELLED'].includes(status)) {
       return res.status(400).json({ message: 'Invalid assignment status' });
     }
 
@@ -184,7 +184,7 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
 
     const updated = await prisma.guideAssignment.update({
       where: { id: assignmentId },
-      data: { status },
+      data: { status: status === 'CANCELLED' ? 'CANCELLED' : status },
       include: {
         booking: {
           include: {
@@ -195,8 +195,35 @@ router.put('/assignments/:id/status', async (req: AuthenticatedRequest, res: Res
       },
     });
 
-    // If guide rejects booking, automatically assign to another available guide
-    if (status === 'REJECTED') {
+    // Handle booking status updates based on guide actions
+    if (status === 'ACCEPTED') {
+      await prisma.booking.update({
+        where: { id: updated.bookingId },
+        data: { status: 'Guide Accepted' }
+      });
+    } else if (status === 'STARTED') {
+      await prisma.booking.update({
+        where: { id: updated.bookingId },
+        data: { status: 'Tour Started' }
+      });
+    } else if (status === 'COMPLETED') {
+      await prisma.booking.update({
+        where: { id: updated.bookingId },
+        data: { status: 'Tour Completed' }
+      });
+    } else if (status === 'CANCELLED') {
+      const currentSpecialRequests = updated.booking.specialRequests || '';
+      const newSpecialRequests = currentSpecialRequests 
+        ? `${currentSpecialRequests} | Guide Cancellation: ${reason || 'No reason specified'}`
+        : `Guide Cancellation: ${reason || 'No reason specified'}`;
+      await prisma.booking.update({
+        where: { id: updated.bookingId },
+        data: {
+          status: 'CANCELLED',
+          specialRequests: newSpecialRequests
+        }
+      });
+    } else if (status === 'REJECTED') {
       const currentList = updated.booking.rejectedGuides || '';
       const newList = currentList ? `${currentList},${assignment.guideId}` : assignment.guideId;
       await prisma.booking.update({
@@ -316,9 +343,23 @@ async function assignNextGuide(bookingId: string) {
         }
       });
 
+      // Update booking status to Waiting for Guide Acceptance
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: 'Waiting for Guide Acceptance' }
+      });
+
       console.log(`Auto-reassigned guide ${selectedGuide.id} to booking ${bookingId} after rejection`);
     } else {
-      console.log(`No other available guides found for booking ${bookingId} after rejection`);
+      // If no other available guides, delete the assignment and mark booking as "Waiting for Guide"
+      await prisma.guideAssignment.delete({
+        where: { bookingId }
+      });
+      await prisma.booking.update({
+        where: { id: bookingId },
+        data: { status: 'Waiting for Guide' }
+      });
+      console.log(`No other available guides found for booking ${bookingId} after rejection. Marked as Waiting for Guide.`);
     }
   } catch (error) {
     console.error('Error reassigning guide:', error);

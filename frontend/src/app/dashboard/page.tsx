@@ -16,22 +16,24 @@ interface Booking {
   pickupLocation: string;
   contactNumber: string;
   totalPrice: number;
-  status: 'CONFIRMED' | 'CANCELLED';
+  status: string;
   paymentStatus: string;
   invoiceId: string;
   createdAt: string;
   package: { name: string; destination: string; price: number };
   guideAssignment?: {
-    status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED';
+    status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'STARTED' | 'COMPLETED' | 'CANCELLED';
     rating?: number | null;
     feedback?: string | null;
     guide: {
+      phone?: string;
+      averageRating?: number;
       user: {
         name: string;
         email: string;
       };
     };
-  };
+  } | null;
 }
 
 export default function DashboardPage() {
@@ -56,6 +58,28 @@ export default function DashboardPage() {
   const [activeChat, setActiveChat] = useState<Booking | null>(null);
   const [chatMessages, setChatMessages] = useState<{[key: string]: { sender: 'guide' | 'customer', text: string, time: string }[]}>({});
   const [newMessage, setNewMessage] = useState('');
+  const steps = [
+    { label: 'Booking Confirmed', desc: 'Your reservation is safe' },
+    { label: 'Guide Assigned', desc: 'Matching local guide' },
+    { label: 'Guide Accepted', desc: 'Guide accepted your trip' },
+    { label: 'Tour Started', desc: 'Tour is currently ongoing' },
+    { label: 'Tour Completed', desc: 'Hope you enjoyed!' }
+  ];
+
+  const getStepIndex = (b: Booking) => {
+    if (b.status === 'CANCELLED') return -1;
+    if (b.status === 'Tour Completed') return 5;
+    if (b.status === 'Tour Started') return 4;
+    if (b.status === 'Guide Accepted') return 3;
+    if (b.status === 'Waiting for Guide Acceptance') return 2;
+    if (b.guideAssignment) {
+      if (b.guideAssignment.status === 'COMPLETED') return 5;
+      if (b.guideAssignment.status === 'STARTED') return 4;
+      if (b.guideAssignment.status === 'ACCEPTED') return 3;
+      if (b.guideAssignment.status === 'PENDING') return 2;
+    }
+    return 1;
+  };
 
   const fetchBookings = async () => {
     if (!token) return;
@@ -293,42 +317,76 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                     {/* Guide Assignment Info */}
-                    {booking.guideAssignment && (
-                      <div className="rounded-xl bg-slate-900 border border-slate-800/80 p-3 mt-1 flex items-center justify-between text-xs">
-                        <div className="space-y-1">
-                          <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block">
-                            Assigned Tour Guide
-                          </span>
-                          <div className="flex items-center space-x-2 text-foreground font-semibold">
-                            <div className={`h-2 w-2 rounded-full ${
-                              booking.guideAssignment.status === 'COMPLETED' ? 'bg-slate-500' : 'bg-emerald-500 animate-pulse'
-                            }`} />
-                            <span>{booking.guideAssignment.guide.user.name}</span>
+                     {/* Progress Timeline */}
+                    {booking.status !== 'CANCELLED' && (
+                      <div className="mt-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800/40">
+                        <span className="text-4xs font-bold uppercase tracking-widest text-secondary block mb-3">
+                          Tour Timeline & Status
+                        </span>
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-2 relative">
+                          {steps.map((step, idx) => {
+                            const stepNum = idx + 1;
+                            const currentStep = getStepIndex(booking);
+                            const isCompleted = currentStep >= stepNum;
+                            const isCurrent = currentStep === stepNum;
+                            
+                            return (
+                              <div key={idx} className="flex md:flex-col items-center md:text-center flex-1 w-full relative">
+                                {idx < steps.length - 1 && (
+                                  <div className="hidden md:block absolute left-[55%] right-[-45%] top-3.5 h-[2px] bg-slate-800 z-0">
+                                    <div 
+                                      className="h-full bg-secondary transition-all duration-300" 
+                                      style={{ width: currentStep > stepNum ? '100%' : '0%' }}
+                                    />
+                                  </div>
+                                )}
+                                
+                                <div className="flex items-center md:flex-col z-10">
+                                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                                    isCompleted 
+                                      ? 'bg-secondary text-slate-950 font-black shadow-lg shadow-secondary/20' 
+                                      : 'bg-slate-800 text-slate-500 border border-slate-700'
+                                  } ${isCurrent ? 'ring-4 ring-secondary/20 animate-pulse' : ''}`}>
+                                    {isCompleted ? '✓' : stepNum}
+                                  </div>
+                                  <div className="ml-3 md:ml-0 md:mt-2 text-left md:text-center">
+                                    <p className={`text-2xs font-bold leading-tight ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                      {step.label}
+                                    </p>
+                                    <p className="text-4xs text-muted-foreground hidden md:block mt-0.5">
+                                      {step.desc}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Guide Information Block */}
+                        {booking.guideAssignment && (
+                          <div className="mt-4 pt-4 border-t border-border/10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-2xs">
+                            <div className="space-y-0.5">
+                              <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block font-mono">Tour Guide</span>
+                              <span className="font-semibold text-foreground">{booking.guideAssignment.guide.user.name}</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block font-mono">Guide Phone</span>
+                              <span className="font-semibold text-secondary font-mono">{booking.guideAssignment.guide.phone || '+1-555-0199'}</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block font-mono">Guide Rating</span>
+                              <span className="font-semibold text-foreground flex items-center gap-0.5">
+                                <span className="text-amber-400">★</span>
+                                <span>{booking.guideAssignment.guide.averageRating || '5.0'} / 5</span>
+                              </span>
+                            </div>
+                            <div className="space-y-0.5">
+                              <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block font-mono">Meeting Location</span>
+                              <span className="font-semibold text-foreground truncate">{booking.pickupLocation || 'Hotel Lobby / Airport'}</span>
+                            </div>
                           </div>
-                          {['ACCEPTED', 'STARTED', 'COMPLETED'].includes(booking.guideAssignment.status) && (
-                            <p className="text-3xs text-secondary font-mono flex items-center space-x-1 mt-0.5">
-                              <Phone className="h-3 w-3" />
-                              <span>Phone: +1-555-0199</span>
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right space-y-1">
-                          <span className="text-4xs font-bold uppercase tracking-widest text-muted-foreground block">
-                            Guide Status
-                          </span>
-                          <span className={`text-3xs font-semibold px-2 py-0.5 rounded ${
-                            booking.guideAssignment.status === 'COMPLETED'
-                              ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                              : booking.guideAssignment.status === 'ACCEPTED'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : booking.guideAssignment.status === 'REJECTED'
-                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          }`}>
-                            {booking.guideAssignment.status}
-                          </span>
-                        </div>
+                        )}
                       </div>
                     )}
 

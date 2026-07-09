@@ -12,7 +12,7 @@ import {
 
 interface Assignment {
   id: string;
-  status: 'PENDING' | 'ACCEPTED' | 'STARTED' | 'REJECTED' | 'COMPLETED';
+  status: 'PENDING' | 'ACCEPTED' | 'STARTED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
   rating?: number | null;
   feedback?: string | null;
   createdAt: string;
@@ -188,7 +188,7 @@ export default function TourGuidePortal() {
     }
   };
 
-  const handleUpdateStatus = async (assignmentId: string, newStatus: 'ACCEPTED' | 'REJECTED' | 'STARTED' | 'COMPLETED') => {
+  const handleUpdateStatus = async (assignmentId: string, newStatus: 'ACCEPTED' | 'REJECTED' | 'STARTED' | 'COMPLETED' | 'CANCELLED', reason?: string) => {
     if (!token) return;
     setActionLoading(assignmentId);
     try {
@@ -198,7 +198,7 @@ export default function TourGuidePortal() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, reason }),
       });
 
       const resData = await res.json();
@@ -685,23 +685,53 @@ export default function TourGuidePortal() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/5">
                       {asg.status === 'ACCEPTED' ? (
-                        <button
-                          onClick={() => handleUpdateStatus(asg.id, 'STARTED')}
-                          disabled={actionLoading === asg.id}
-                          className="col-span-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 py-2.5 text-2xs font-bold text-slate-950 flex items-center justify-center space-x-1"
-                        >
-                          <Compass className="h-3.5 w-3.5" />
-                          <span>Start Tour</span>
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleUpdateStatus(asg.id, 'STARTED')}
+                            disabled={actionLoading === asg.id}
+                            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 py-2.5 text-2xs font-bold text-slate-950 flex items-center justify-center space-x-1"
+                          >
+                            <Compass className="h-3.5 w-3.5" />
+                            <span>Start Tour</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const reason = prompt("Please enter the reason for cancelling this tour booking:");
+                              if (reason) handleUpdateStatus(asg.id, 'CANCELLED', reason);
+                            }}
+                            disabled={actionLoading === asg.id}
+                            className="rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-500 flex items-center justify-center space-x-1"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            <span>Cancel Tour</span>
+                          </button>
+                        </>
+                      ) : asg.status === 'STARTED' ? (
+                        <>
+                          <button
+                            onClick={() => handleUpdateStatus(asg.id, 'COMPLETED')}
+                            disabled={actionLoading === asg.id}
+                            className="rounded-xl bg-emerald-500 hover:brightness-110 py-2.5 text-2xs font-bold text-white flex items-center justify-center space-x-1"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span>Complete Tour</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              const reason = prompt("Please enter the reason for cancelling this tour booking:");
+                              if (reason) handleUpdateStatus(asg.id, 'CANCELLED', reason);
+                            }}
+                            disabled={actionLoading === asg.id}
+                            className="rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-500 flex items-center justify-center space-x-1"
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            <span>Cancel Tour</span>
+                          </button>
+                        </>
                       ) : (
-                        <button
-                          onClick={() => handleUpdateStatus(asg.id, 'COMPLETED')}
-                          disabled={actionLoading === asg.id}
-                          className="col-span-2 rounded-xl bg-emerald-500 hover:brightness-110 py-2.5 text-2xs font-bold text-white flex items-center justify-center space-x-1"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          <span>Complete Tour</span>
-                        </button>
+                        <div className="col-span-2 text-2xs font-semibold text-slate-500 py-2">
+                          Status: {asg.status}
+                        </div>
                       )}
 
                       <a

@@ -36,28 +36,9 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
 
     const invoiceId = `INV-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
 
-    const booking = await prisma.booking.create({
-      data: {
-        userId,
-        packageId,
-        travelDate: new Date(travelDate),
-        travelersCount: Number(travelersCount),
-        roomType,
-        specialRequests: specialRequests || '',
-        pickupLocation: pickupLocation || 'Hotel Lobby / Airport',
-        contactNumber: contactNumber || '+1-555-0199',
-        totalPrice,
-        status: paymentStatus === 'PAID' ? 'CONFIRMED' : 'PENDING',
-        paymentStatus,
-        invoiceId,
-      },
-      include: {
-        package: true,
-      }
-    });
-
-    // Auto-assignment logic
-    if (booking.status === 'CONFIRMED') {
+    // Guide auto-assignment logic
+    let selectedGuide = null;
+    if (paymentStatus === 'PAID') {
       const guides = await prisma.tourGuide.findMany({
         where: { availability: true },
         include: {
@@ -95,20 +76,48 @@ router.post('/', authenticateJWT, async (req: AuthenticatedRequest, res: Respons
           const countB = b.assignments.filter(asg => asg.status !== 'REJECTED' && asg.status !== 'COMPLETED').length;
           return countA - countB;
         });
-        const selectedGuide = availableGuides[0];
-
-        await prisma.guideAssignment.create({
-          data: {
-            bookingId: booking.id,
-            guideId: selectedGuide.id,
-            status: 'PENDING',
-          }
-        });
-
-        console.log(`Auto-assigned guide ${selectedGuide.id} to booking ${booking.id}`);
-      } else {
-        console.log(`No available guides found for destination ${pkg.destination} on date ${new Date(travelDate).toLocaleDateString()}`);
+        selectedGuide = availableGuides[0];
       }
+    }
+
+    let initialBookingStatus = 'CONFIRMED';
+    if (paymentStatus === 'PAID') {
+      initialBookingStatus = selectedGuide ? 'Waiting for Guide Acceptance' : 'Waiting for Guide';
+    } else {
+      initialBookingStatus = 'PENDING';
+    }
+
+    const booking = await prisma.booking.create({
+      data: {
+        userId,
+        packageId,
+        travelDate: new Date(travelDate),
+        travelersCount: Number(travelersCount),
+        roomType,
+        specialRequests: specialRequests || '',
+        pickupLocation: pickupLocation || 'Hotel Lobby / Airport',
+        contactNumber: contactNumber || '+1-555-0199',
+        totalPrice,
+        status: initialBookingStatus,
+        paymentStatus,
+        invoiceId,
+      },
+      include: {
+        package: true,
+      }
+    });
+
+    if (selectedGuide) {
+      await prisma.guideAssignment.create({
+        data: {
+          bookingId: booking.id,
+          guideId: selectedGuide.id,
+          status: 'PENDING',
+        }
+      });
+      console.log(`Auto-assigned guide ${selectedGuide.id} to booking ${booking.id}`);
+    } else {
+      console.log(`No available guides found for destination ${pkg.destination} on date ${new Date(travelDate).toLocaleDateString()}`);
     }
 
     // Console Log Simulated Email Confirmation
@@ -167,13 +176,42 @@ router.get('/history', authenticateJWT, async (req: AuthenticatedRequest, res: R
     });
 
     // Format output
-    const formatted = bookings.map(b => ({
-      ...b,
-      package: {
-        ...b.package,
-        images: JSON.parse(b.package.images),
-        itinerary: JSON.parse(b.package.itinerary),
+    const formatted = await Promise.all(bookings.map(async (b) => {
+      let guideAvgRating = 5.0;
+      let guidePhone = '+1-555-0199'; // default mock phone
+      if (b.guideAssignment) {
+        const guideId = b.guideAssignment.guideId;
+        const allGuideAssignments = await prisma.guideAssignment.findMany({
+          where: { guideId, rating: { not: null } },
+          select: { rating: true }
+        });
+        if (allGuideAssignments.length > 0) {
+          const totalRating = allGuideAssignments.reduce((sum, a) => sum + (a.rating || 0), 0);
+          guideAvgRating = Number((totalRating / allGuideAssignments.length).toFixed(1));
+        }
+        
+        const email = b.guideAssignment.guide.user.email;
+        if (email === 'guide@exploreworld.com') guidePhone = '+1-555-0122';
+        else if (email === 'guide2@exploreworld.com') guidePhone = '+1-555-0244';
+        else if (email === 'kashmirguide@exploreworld.com') guidePhone = '+1-555-0899';
       }
+
+      return {
+        ...b,
+        package: {
+          ...b.package,
+          images: JSON.parse(b.package.images),
+          itinerary: JSON.parse(b.package.itinerary),
+        },
+        guideAssignment: b.guideAssignment ? {
+          ...b.guideAssignment,
+          guide: {
+            ...b.guideAssignment.guide,
+            phone: guidePhone,
+            averageRating: guideAvgRating,
+          }
+        } : null
+      };
     }));
 
     return res.json(formatted);

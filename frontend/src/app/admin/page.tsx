@@ -97,8 +97,14 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Booking filters state
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterDestination, setFilterDestination] = useState('');
+  const [filterDate, setFilterDate] = useState('');
+  const [filterGuide, setFilterGuide] = useState('');
+
   // Forms control tabs
-  const [adminTab, setAdminTab] = useState<'stats' | 'catalog' | 'reviews' | 'inquiries' | 'guides'>('stats');
+  const [adminTab, setAdminTab] = useState<'stats' | 'catalog' | 'reviews' | 'inquiries' | 'guides' | 'bookings'>('stats');
   const [activeForm, setActiveForm] = useState<'create' | 'list'>('list');
 
   // New package Form State
@@ -175,7 +181,13 @@ export default function AdminPage() {
 
   const fetchAllBookings = async () => {
     try {
-      const res = await fetch(`${apiUrl}/api/admin/bookings`, {
+      const query = new URLSearchParams();
+      if (filterStatus) query.append('status', filterStatus);
+      if (filterDestination) query.append('destination', filterDestination);
+      if (filterDate) query.append('date', filterDate);
+      if (filterGuide) query.append('guideId', filterGuide);
+
+      const res = await fetch(`${apiUrl}/api/admin/bookings?${query.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
@@ -210,6 +222,37 @@ export default function AdminPage() {
       }
     }
   }, [token, user]);
+
+  useEffect(() => {
+    if (token && user?.role === 'ADMIN') {
+      fetchAllBookings();
+    }
+  }, [filterStatus, filterDestination, filterDate, filterGuide]);
+
+  const handleCancelBookingAdmin = async (bookingId: string) => {
+    const reason = prompt("Please enter the reason for cancelling this booking:");
+    if (!reason) return;
+    try {
+      const res = await fetch(`${apiUrl}/api/admin/bookings/${bookingId}/cancel`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason })
+      });
+      if (res.ok) {
+        alert('Booking cancelled successfully.');
+        fetchAllBookings();
+        fetchAdminStats();
+      } else {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to cancel booking');
+      }
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   const handleCreatePackage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -419,6 +462,7 @@ export default function AdminPage() {
       <div className="flex space-x-4 border-b border-border/20 pb-3">
         {[
           { label: 'Stats overview', value: 'stats' },
+          { label: 'Bookings Manager', value: 'bookings' },
           { label: 'Packages inventory', value: 'catalog' },
           { label: 'Reviews moderation', value: 'reviews' },
           { label: 'Customer Inquiries', value: 'inquiries' },
@@ -448,6 +492,159 @@ export default function AdminPage() {
         </div>
       ) : (
         <>
+          {/* BOOKINGS MANAGER TAB */}
+          {adminTab === 'bookings' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="flex items-center justify-between border-b border-border/10 pb-3">
+                <h3 className="text-sm font-bold text-foreground">Filter & Manage Active Booking Reservations</h3>
+                <button
+                  onClick={() => {
+                    setFilterStatus('');
+                    setFilterDestination('');
+                    setFilterDate('');
+                    setFilterGuide('');
+                  }}
+                  className="text-3xs text-secondary font-bold hover:underline"
+                >
+                  Clear All Filters
+                </button>
+              </div>
+
+              {/* Filters Bar */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-900/40 p-4 rounded-xl border border-border/10 text-xs">
+                <div>
+                  <label className="block text-4xs font-bold uppercase text-slate-400 mb-1">Destination</label>
+                  <input
+                    type="text"
+                    placeholder="Search destination..."
+                    value={filterDestination}
+                    onChange={(e) => setFilterDestination(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-slate-950 px-3 py-1.5 text-foreground focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-4xs font-bold uppercase text-slate-400 mb-1">Travel Date</label>
+                  <input
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-slate-950 px-3 py-1.5 text-foreground focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-4xs font-bold uppercase text-slate-400 mb-1">Assigned Guide</label>
+                  <select
+                    value={filterGuide}
+                    onChange={(e) => setFilterGuide(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-slate-950 px-3 py-1.5 text-foreground focus:outline-none"
+                  >
+                    <option value="">All Guides</option>
+                    {guides.map((g) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-4xs font-bold uppercase text-slate-400 mb-1">Booking Status</label>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className="w-full rounded-lg border border-border bg-slate-950 px-3 py-1.5 text-foreground focus:outline-none"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="Waiting for Guide Acceptance">Waiting for Guide Acceptance</option>
+                    <option value="Waiting for Guide">Waiting for Guide</option>
+                    <option value="Guide Accepted">Guide Accepted</option>
+                    <option value="Tour Started">Tour Started</option>
+                    <option value="Tour Completed">Tour Completed</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Bookings Table */}
+              <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-muted/40 border-b border-border/80 text-muted-foreground font-semibold">
+                      <th className="p-3">Invoice ID</th>
+                      <th className="p-3">Customer</th>
+                      <th className="p-3">Package Destination</th>
+                      <th className="p-3">Travel Date</th>
+                      <th className="p-3">Assigned Guide</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allBookings.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-4 text-center text-slate-500 italic">
+                          No bookings found matching selected filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      allBookings.map((b) => (
+                        <tr key={b.id} className="border-b border-border/40 last:border-b-0 hover:bg-muted/20">
+                          <td className="p-3 font-mono font-bold">{b.invoiceId}</td>
+                          <td className="p-3">
+                            <span className="font-semibold block">{b.user.name}</span>
+                            <span className="text-3xs text-muted-foreground block">{b.user.email}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="font-semibold block">{b.package.name}</span>
+                            <span className="text-3xs text-muted-foreground block">{b.package.destination}</span>
+                          </td>
+                          <td className="p-3">{new Date(b.travelDate).toLocaleDateString()}</td>
+                          <td className="p-3">
+                            <select
+                              disabled={b.status === 'CANCELLED' || b.status === 'Tour Completed'}
+                              value={b.guideAssignment?.guideId || ''}
+                              onChange={(e) => handleReassignBooking(b.id, e.target.value)}
+                              className="rounded-lg border border-border bg-slate-950 px-2.5 py-1 text-3xs text-foreground focus:outline-none disabled:opacity-50 font-sans"
+                            >
+                              <option value="">-- Unassigned --</option>
+                              {guides.map((g) => (
+                                <option key={g.id} value={g.id}>
+                                  {g.name} ({g.specialization})
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="p-3">
+                            <span className={`rounded px-2 py-0.5 text-3xs font-semibold uppercase ${
+                              b.status === 'Tour Completed'
+                                ? 'bg-slate-500/10 text-slate-400'
+                                : b.status === 'Tour Started'
+                                ? 'bg-indigo-500/10 text-indigo-400'
+                                : b.status === 'Guide Accepted'
+                                ? 'bg-emerald-500/10 text-emerald-500'
+                                : b.status === 'CANCELLED'
+                                ? 'bg-rose-500/10 text-rose-500'
+                                : 'bg-amber-500/10 text-amber-500'
+                            }`}>
+                              {b.status}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right">
+                            {b.status !== 'CANCELLED' && b.status !== 'Tour Completed' && (
+                              <button
+                                onClick={() => handleCancelBookingAdmin(b.id)}
+                                className="rounded bg-destructive/10 hover:bg-destructive/20 px-2 py-1 text-3xs font-bold text-destructive"
+                              >
+                                Cancel Booking
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* STATS OVERVIEW TAB */}
           {adminTab === 'stats' && (
             <div className="space-y-8">
