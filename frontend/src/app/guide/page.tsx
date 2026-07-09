@@ -271,17 +271,17 @@ export default function TourGuidePortal() {
         <div className="relative w-full max-w-md space-y-8 z-10 text-center">
           
           {user && user.role !== 'GUIDE' && user.role !== 'TOUR_GUIDE' ? (
-            <div className="rounded-3xl border border-rose-500/20 p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-6 text-center">
+            <div className="rounded-[18px] border border-rose-500/20 p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-6 text-center">
               <ShieldAlert className="h-14 w-14 text-rose-500 mx-auto animate-pulse" />
               <div className="space-y-2">
-                <h2 className="text-xl font-extrabold tracking-tight text-white">Guide Credentials Required</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-xl font-bold tracking-tight text-white font-sans">Guide Credentials Required</h2>
+                <p className="text-xs text-slate-400 font-semibold">
                   Your current account is registered as a <strong className="text-amber-500 uppercase">{user.role}</strong>. Only Tour Guide accounts are permitted to access this portal.
                 </p>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3 text-xs font-bold text-slate-950 shadow-lg hover:brightness-110 transition-all duration-200"
+                className="w-full rounded-xl bg-amber-500 py-3 text-xs font-bold text-slate-950 shadow hover:brightness-110 transition-all duration-200"
               >
                 Logout & Sign In as Guide
               </button>
@@ -291,14 +291,14 @@ export default function TourGuidePortal() {
               <div className="flex flex-col items-center space-y-3">
                 <Compass className="h-10 w-10 text-amber-500 animate-spin" />
                 <div className="space-y-1.5 mt-2">
-                  <h2 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">Tour Guide Portal</h2>
-                  <p className="text-xs text-slate-400 font-medium">Opening Tour Guide Dashboard...</p>
+                  <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl font-sans">Tour Guide Portal</h2>
+                  <p className="text-xs text-slate-400 font-semibold">Opening Tour Guide Dashboard...</p>
                 </div>
               </div>
 
               {loginError ? (
-                <div className="rounded-3xl border border-white/10 p-6 sm:p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-4">
-                  <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-500 flex items-center justify-center space-x-2">
+                <div className="rounded-[18px] border border-white/10 p-6 sm:p-8 shadow-2xl bg-slate-900/60 backdrop-blur-xl space-y-4 animate-fade-in">
+                  <div className="rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-500 flex items-center justify-center space-x-2 font-semibold">
                     <ShieldAlert className="h-4 w-4 shrink-0" />
                     <span>{loginError}</span>
                   </div>
@@ -313,10 +313,10 @@ export default function TourGuidePortal() {
                   </button>
                 </div>
               ) : (
-                <p className="text-2xs text-slate-500 italic">Please wait while we verify your guide session credentials.</p>
+                <p className="text-2xs text-slate-500 italic font-semibold">Please wait while we verify your guide session credentials.</p>
               )}
 
-              <div className="flex justify-between items-center text-[10px] text-slate-500 px-4 pt-4 border-t border-white/5">
+              <div className="flex justify-between items-center text-[10px] text-slate-500 px-4 pt-4 border-t border-white/5 font-semibold">
                 <a className="hover:text-white transition-colors" href="/">← Back to explorer website</a>
                 <span className="flex items-center space-x-1 font-mono">
                   <ShieldAlert className="h-3 w-3 text-amber-500" />
@@ -335,10 +335,10 @@ export default function TourGuidePortal() {
   if (dashboardLoading) {
     return (
       <div className="flex h-screen bg-slate-950 text-white font-sans">
-        <div className="w-64 border-r border-white/5 bg-slate-900/60 p-6 animate-pulse" />
-        <div className="flex-1 p-8 space-y-6 animate-pulse">
+        <div className="w-64 border-r border-white/5 bg-slate-900/40 p-6 animate-pulse" />
+        <div className="flex-grow p-8 space-y-6 animate-pulse">
           <div className="h-12 w-1/4 bg-white/5 rounded-xl" />
-          <div className="h-64 bg-white/5 rounded-3xl" />
+          <div className="h-64 bg-white/5 rounded-[18px]" />
         </div>
       </div>
     );
@@ -348,9 +348,9 @@ export default function TourGuidePortal() {
   if (dashboardError || !data) {
     return (
       <div className="flex h-screen bg-slate-950 items-center justify-center text-white font-sans">
-        <div className="rounded-2xl bg-rose-500/10 border border-rose-500/20 p-8 max-w-md text-center space-y-4">
+        <div className="rounded-[18px] bg-rose-500/5 border border-rose-500/10 p-8 max-w-md text-center space-y-4">
           <ShieldAlert className="h-10 w-10 text-rose-500 mx-auto" />
-          <p className="text-sm">Failed to load guide dashboard: {dashboardError}</p>
+          <p className="text-sm font-semibold">Failed to load guide dashboard: {dashboardError}</p>
           <button
             onClick={fetchDashboardData}
             className="rounded-xl bg-amber-500 px-6 py-2.5 text-xs text-slate-950 font-bold hover:brightness-110"
@@ -368,17 +368,17 @@ export default function TourGuidePortal() {
   const completedAssignments = data.assignments.filter(a => a.status === 'COMPLETED');
   const ratings = data.assignments.filter(a => a.rating !== null && a.rating !== undefined);
 
-  // RENDER PORTAL VIEW 4: Authorized Guide Dashboard
+  // RENDER PORTAL VIEW 4: Authorized Guide Dashboard (Forced dark styling)
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white font-sans overflow-hidden">
+    <div className="dark bg-slate-950 text-slate-100 min-h-screen flex font-sans overflow-hidden">
       
       {/* 1. Left Sidebar Portal Navigation */}
       <aside className="w-64 shrink-0 bg-slate-900 border-r border-white/5 flex flex-col justify-between p-6">
         <div className="space-y-8">
           {/* Compass Logo Header */}
           <div className="flex items-center space-x-2 px-2">
-            <Compass className="h-6 w-6 text-amber-500 animate-spin-slow" />
-            <span className="font-black text-md tracking-wide bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 bg-clip-text text-transparent">
+            <Compass className="h-5.5 w-5.5 text-amber-500 animate-spin-slow" />
+            <span className="font-bold text-sm tracking-wider text-white font-sans">
               Guide Console
             </span>
           </div>
@@ -387,7 +387,7 @@ export default function TourGuidePortal() {
           <nav className="space-y-1.5">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'dashboard' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -397,7 +397,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('new-requests')}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'new-requests' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -406,7 +406,7 @@ export default function TourGuidePortal() {
                 <span>New Requests</span>
               </div>
               {pendingAssignments.length > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${
                   activeTab === 'new-requests' ? 'bg-slate-950 text-amber-500' : 'bg-amber-500 text-slate-950'
                 }`}>
                   {pendingAssignments.length}
@@ -416,7 +416,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('assigned')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'assigned' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -426,7 +426,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('upcoming')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'upcoming' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -436,7 +436,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('completed')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'completed' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -446,7 +446,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('earnings')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'earnings' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -456,7 +456,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('ratings')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'ratings' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -466,7 +466,7 @@ export default function TourGuidePortal() {
 
             <button
               onClick={() => setActiveTab('profile')}
-              className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                 activeTab === 'profile' ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
             >
@@ -479,7 +479,7 @@ export default function TourGuidePortal() {
         {/* Sidebar Footer - Logout */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-500/10 transition-all"
+          className="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-white hover:bg-rose-500/10 transition-all"
         >
           <LogOut className="h-4.5 w-4.5" />
           <span>Logout</span>
@@ -487,23 +487,23 @@ export default function TourGuidePortal() {
       </aside>
 
       {/* 2. Main Scrollable Workspace Panel */}
-      <main className="flex-grow p-8 overflow-y-auto max-h-screen space-y-6">
+      <main className="flex-grow p-8 overflow-y-auto max-h-screen space-y-6 bg-slate-950">
         
         {/* Welcome Banner */}
         <div className="flex items-center justify-between border-b border-white/5 pb-4">
           <div>
-            <h1 className="text-xl font-extrabold text-white">Welcome, {data.guide.name}</h1>
-            <p className="text-2xs text-slate-400">Manage your bookings, availability, and earnings.</p>
+            <h1 className="text-xl font-bold text-white font-sans">Welcome, {data.guide.name}</h1>
+            <p className="text-2xs text-slate-400 font-semibold">Manage your bookings, availability, and earnings.</p>
           </div>
 
-          {/* Quick Stats Online Switch */}
+          {/* Availability online Switch */}
           <button
             disabled={toggleLoading}
             onClick={handleToggleAvailability}
-            className={`flex items-center space-x-2 rounded-xl border px-3 py-1.5 text-2xs font-bold transition-all shadow ${
+            className={`flex items-center space-x-2 rounded-xl border px-4 py-2 text-2xs font-bold transition-all shadow ${
               data.guide.availability
-                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
             }`}
           >
             {data.guide.availability ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
@@ -511,50 +511,48 @@ export default function TourGuidePortal() {
           </button>
         </div>
 
-        {/* Render Tab Contents */}
-
         {/* Tab 1: Dashboard Overview */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6 animate-fade-in">
             {/* KPI grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-2">
-                <span className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Total Bookings</span>
+              <div className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Total Bookings</span>
                 <span className="text-2xl font-black text-white">{data.stats.totalAssigned}</span>
               </div>
-              <div className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-2">
-                <span className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Today's Tours</span>
+              <div className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Today's Tours</span>
                 <span className="text-2xl font-black text-white">{data.stats.todayTours}</span>
               </div>
-              <div className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-2">
-                <span className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Upcoming Tours</span>
+              <div className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Upcoming Tours</span>
                 <span className="text-2xl font-black text-white">{data.stats.upcomingTours}</span>
               </div>
-              <div className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-2">
-                <span className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Monthly Earnings</span>
-                <span className="text-2xl font-black text-amber-500">${data.stats.monthlyEarnings}</span>
+              <div className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Completed</span>
+                <span className="text-2xl font-black text-amber-500">{data.stats.completedTours}</span>
               </div>
             </div>
 
             {/* Quick Profile Summary */}
-            <div className="rounded-2xl border border-white/5 bg-slate-900 p-6 space-y-4">
+            <div className="rounded-[18px] border border-white/5 bg-slate-900 p-6 space-y-4">
               <div className="flex items-center space-x-3">
-                <div className="p-3 bg-amber-500/10 text-amber-500 rounded-xl">
+                <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
                   <User className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Tour Guide Profile Summary</h3>
-                  <p className="text-2xs text-slate-400">{data.guide.email}</p>
+                  <h3 className="font-bold text-sm font-sans">Tour Guide Profile Summary</h3>
+                  <p className="text-xs text-slate-400 font-semibold">{data.guide.email}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="border border-white/5 p-3 rounded-xl bg-slate-950/40">
-                  <span className="text-slate-500 block text-3xs font-mono uppercase">Specializations</span>
-                  <strong className="text-slate-300">{data.guide.specialization}</strong>
+              <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
+                <div className="border border-white/5 p-4 rounded-xl bg-slate-950/40 space-y-0.5">
+                  <span className="text-slate-500 block text-[9px] font-bold font-mono uppercase">Specialized States / Destinations</span>
+                  <strong className="text-slate-200">{data.guide.specialization}</strong>
                 </div>
-                <div className="border border-white/5 p-3 rounded-xl bg-slate-950/40">
-                  <span className="text-slate-500 block text-3xs font-mono uppercase">Average Rating</span>
-                  <strong className="text-amber-500 flex items-center space-x-1 mt-0.5">
+                <div className="border border-white/5 p-4 rounded-xl bg-slate-950/40 space-y-0.5">
+                  <span className="text-slate-500 block text-[9px] font-bold font-mono uppercase">Average Rating Score</span>
+                  <strong className="text-amber-400 flex items-center space-x-1 mt-0.5 font-bold">
                     <span>★</span>
                     <span>{ratings.length > 0 ? (ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratings.length).toFixed(1) : '5.0'}</span>
                   </strong>
@@ -569,30 +567,30 @@ export default function TourGuidePortal() {
           <div className="space-y-4 animate-fade-in">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">New Assignment Requests</h2>
             {pendingAssignments.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-xs text-slate-400 bg-slate-900/40">
+              <div className="rounded-[18px] border border-dashed border-white/10 p-12 text-center text-xs text-slate-400 bg-slate-900/40 font-semibold">
                 No new guide assignment requests pending at this time.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {pendingAssignments.map(asg => (
-                  <div key={asg.id} className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-4 shadow-sm">
+                  <div key={asg.id} className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-4 shadow-sm hover:border-amber-500/25 transition-colors">
                     <div className="flex justify-between items-start border-b border-white/5 pb-3">
                       <div>
-                        <span className="text-xs font-black text-white block">{asg.booking.package.name}</span>
-                        <span className="text-4xs text-slate-500 block font-mono">INV: {asg.booking.invoiceId}</span>
+                        <span className="text-xs font-bold text-white block font-sans">{asg.booking.package.name}</span>
+                        <span className="text-[10px] text-slate-500 block font-mono">INV: {asg.booking.invoiceId}</span>
                       </div>
-                      <span className="text-3xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded">
-                        New Request
+                      <span className="text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-lg uppercase tracking-wider font-sans">
+                        New request
                       </span>
                     </div>
 
-                    <div className="space-y-2 text-xs text-slate-300">
+                    <div className="space-y-2 text-xs text-slate-300 font-semibold">
                       <p>Customer: <strong className="text-white">{asg.booking.user.name}</strong></p>
-                      <p>Travelers: <strong>{asg.booking.travelersCount} Travelers</strong></p>
+                      <p>Travelers: <strong>{asg.booking.travelersCount} Persons</strong></p>
                       <p>Tour Date: <strong>{new Date(asg.booking.travelDate).toLocaleDateString()}</strong></p>
-                      <p className="flex items-center space-x-1 text-3xs border-t border-white/5 pt-2">
-                        <MapPin className="h-3 w-3 text-amber-500 shrink-0" />
-                        <span>Pickup: {asg.booking.pickupLocation}</span>
+                      <p className="flex items-center space-x-1.5 text-[10px] border-t border-white/5 pt-2 font-bold text-slate-400">
+                        <MapPin className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                        <span>Pickup Point: {asg.booking.pickupLocation}</span>
                       </p>
                     </div>
 
@@ -600,14 +598,14 @@ export default function TourGuidePortal() {
                       <button
                         onClick={() => handleUpdateStatus(asg.id, 'ACCEPTED')}
                         disabled={actionLoading === asg.id}
-                        className="flex-1 rounded-xl bg-amber-500 py-2 text-2xs font-bold text-slate-950 shadow hover:brightness-110"
+                        className="flex-1 rounded-xl bg-amber-500 py-2.5 text-2xs font-bold text-slate-950 shadow hover:brightness-110 transition-all"
                       >
-                        Accept
+                        Accept Request
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(asg.id, 'REJECTED')}
                         disabled={actionLoading === asg.id}
-                        className="flex-1 rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2 text-2xs font-bold text-rose-500"
+                        className="flex-1 rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-400 transition-all"
                       >
                         Reject
                       </button>
@@ -624,86 +622,87 @@ export default function TourGuidePortal() {
           <div className="space-y-4 animate-fade-in">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Active Assigned Bookings</h2>
             {activeAssignments.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-xs text-slate-400 bg-slate-900/40">
-                No active bookings currently assigned.
+              <div className="rounded-[18px] border border-dashed border-white/10 p-12 text-center text-xs text-slate-400 bg-slate-900/40 font-semibold">
+                No active bookings currently assigned to your portfolio.
               </div>
             ) : (
               <div className="space-y-4">
                 {activeAssignments.map(asg => (
-                  <div key={asg.id} className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-4 shadow-sm hover:border-amber-500/20 transition-all">
+                  <div key={asg.id} className="rounded-[18px] border border-white/5 bg-slate-900 p-6 space-y-4 shadow-sm hover:border-amber-500/20 transition-all duration-300">
                     <div className="flex justify-between items-start border-b border-white/5 pb-3">
                       <div>
-                        <span className="text-xs font-black text-white block">{asg.booking.package.name}</span>
-                        <span className="text-4xs text-slate-500 block font-mono">Invoice Reference: {asg.booking.invoiceId}</span>
+                        <span className="text-sm font-bold text-white block font-sans">{asg.booking.package.name}</span>
+                        <span className="text-[10px] text-slate-500 block font-mono">Invoice Reference ID: INV-{asg.booking.invoiceId}</span>
                       </div>
-                      <span className={`text-3xs font-bold border px-2 py-0.5 rounded ${
+                      <span className={`text-[10px] font-bold border px-2.5 py-0.5 rounded-lg ${
                         asg.status === 'STARTED'
-                          ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                          : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                       }`}>
-                        {asg.status === 'STARTED' ? 'Tour Running' : 'Accepted'}
+                        {asg.status === 'STARTED' ? 'Tour Running' : 'Assigned'}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300">
-                      <div className="space-y-1">
-                        <span className="text-4xs font-bold uppercase tracking-wider text-slate-500 block font-mono">Customer Details</span>
-                        <p className="font-semibold text-white">{asg.booking.user.name}</p>
-                        <p className="text-3xs flex items-center space-x-1 mt-0.5">
-                          <Phone className="h-3 w-3 text-amber-500" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-350 font-semibold">
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">Customer Details</span>
+                        <p className="font-bold text-white text-sm">{asg.booking.user.name}</p>
+                        <p className="text-2xs flex items-center space-x-1.5 text-amber-400 font-bold">
+                          <Phone className="h-3.5 w-3.5 shrink-0" />
                           <span>{asg.booking.contactNumber}</span>
                         </p>
-                        <p className="text-3xs flex items-center space-x-1 mt-1">
-                          <Users className="h-3 w-3 text-amber-500" />
-                          <span>{asg.booking.travelersCount} Travelers • {asg.booking.roomType} Room</span>
+                        <p className="text-2xs flex items-center space-x-1.5 text-slate-400 font-bold">
+                          <Users className="h-3.5 w-3.5 shrink-0" />
+                          <span>{asg.booking.travelersCount} Persons • {asg.booking.roomType} Lodging Plan</span>
                         </p>
                       </div>
 
-                      <div className="space-y-1">
-                        <span className="text-4xs font-bold uppercase tracking-wider text-slate-500 block font-mono">Package Specs</span>
-                        <p className="text-3xs">🏨 Hotel: {asg.booking.package.hotelDetails}</p>
-                        <p className="text-3xs">🚐 Transport: {asg.booking.package.transportation}</p>
+                      <div className="space-y-1 bg-slate-950/30 p-3.5 rounded-xl border border-white/5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">Special Requests</span>
+                        <p className="text-2xs text-slate-450 italic leading-relaxed">
+                          {asg.booking.specialRequests || 'No special requirements listed by the traveler.'}
+                        </p>
                       </div>
 
-                      <div className="col-span-1 md:col-span-2 border-t border-white/5 pt-2 grid grid-cols-2 gap-2 text-3xs">
-                        <div className="flex items-start space-x-1">
-                          <Calendar className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="col-span-1 md:col-span-2 border-t border-white/5 pt-3 grid grid-cols-2 gap-4 text-[10px] font-bold">
+                        <div className="flex items-start space-x-2">
+                          <Calendar className="h-4.5 w-4.5 text-amber-450 shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-slate-500 block font-semibold uppercase font-mono">Tour Date</span>
-                            <strong className="text-white text-2xs">{new Date(asg.booking.travelDate).toLocaleDateString()}</strong>
+                            <span className="text-slate-500 block uppercase font-mono">Travel Date</span>
+                            <strong className="text-white text-xs">{new Date(asg.booking.travelDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
                           </div>
                         </div>
-                        <div className="flex items-start space-x-1">
-                          <MapPin className="h-3.5 w-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <div className="flex items-start space-x-2">
+                          <MapPin className="h-4.5 w-4.5 text-amber-455 shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-slate-500 block font-semibold uppercase font-mono">Pickup Location</span>
-                            <strong className="text-white text-2xs">{asg.booking.pickupLocation}</strong>
+                            <span className="text-slate-500 block uppercase font-mono">Pickup Point</span>
+                            <strong className="text-white text-xs truncate block max-w-[200px]">{asg.booking.pickupLocation}</strong>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-white/5">
                       {asg.status === 'ACCEPTED' ? (
                         <>
                           <button
                             onClick={() => handleUpdateStatus(asg.id, 'STARTED')}
                             disabled={actionLoading === asg.id}
-                            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 py-2.5 text-2xs font-bold text-slate-950 flex items-center justify-center space-x-1"
+                            className="rounded-xl bg-amber-500 hover:brightness-110 py-2.5 text-2xs font-bold text-slate-950 flex items-center justify-center space-x-1"
                           >
                             <Compass className="h-3.5 w-3.5" />
                             <span>Start Tour</span>
                           </button>
                           <button
                             onClick={() => {
-                              const reason = prompt("Please enter the reason for cancelling this tour booking:");
+                              const reason = prompt("Please enter the reason for cancellation:");
                               if (reason) handleUpdateStatus(asg.id, 'CANCELLED', reason);
                             }}
                             disabled={actionLoading === asg.id}
-                            className="rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-500 flex items-center justify-center space-x-1"
+                            className="rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-400 flex items-center justify-center space-x-1"
                           >
                             <XCircle className="h-3.5 w-3.5" />
-                            <span>Cancel Tour</span>
+                            <span>Cancel</span>
                           </button>
                         </>
                       ) : asg.status === 'STARTED' ? (
@@ -718,18 +717,18 @@ export default function TourGuidePortal() {
                           </button>
                           <button
                             onClick={() => {
-                              const reason = prompt("Please enter the reason for cancelling this tour booking:");
+                              const reason = prompt("Please enter the reason for cancellation:");
                               if (reason) handleUpdateStatus(asg.id, 'CANCELLED', reason);
                             }}
                             disabled={actionLoading === asg.id}
-                            className="rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-500 flex items-center justify-center space-x-1"
+                            className="rounded-xl border border-rose-500/20 hover:bg-rose-500/10 py-2.5 text-2xs font-bold text-rose-400 flex items-center justify-center space-x-1"
                           >
                             <XCircle className="h-3.5 w-3.5" />
-                            <span>Cancel Tour</span>
+                            <span>Cancel</span>
                           </button>
                         </>
                       ) : (
-                        <div className="col-span-2 text-2xs font-semibold text-slate-500 py-2">
+                        <div className="col-span-2 text-xs font-semibold text-slate-500 py-2.5">
                           Status: {asg.status}
                         </div>
                       )}
@@ -738,18 +737,18 @@ export default function TourGuidePortal() {
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(asg.booking.pickupLocation)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-xl border border-white/10 bg-slate-950/60 hover:bg-slate-950 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1"
+                        className="rounded-xl border border-white/10 bg-slate-900 hover:bg-slate-850 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1.5"
                       >
                         <MapPin className="h-3.5 w-3.5 text-rose-500" />
-                        <span>Google Maps</span>
+                        <span>Pickup Map</span>
                       </a>
 
                       <button
                         onClick={() => handleOpenChat(asg)}
-                        className="rounded-xl border border-white/10 bg-slate-950/60 hover:bg-slate-950 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1"
+                        className="rounded-xl border border-white/10 bg-slate-900 hover:bg-slate-850 py-2.5 text-2xs font-bold text-slate-300 flex items-center justify-center space-x-1.5"
                       >
-                        <MessageSquare className="h-3.5 w-3.5 text-amber-500" />
-                        <span>Customer Chat</span>
+                        <MessageSquare className="h-3.5 w-3.5 text-amber-450" />
+                        <span>Chat Client</span>
                       </button>
                     </div>
                   </div>
@@ -764,17 +763,19 @@ export default function TourGuidePortal() {
           <div className="space-y-4 animate-fade-in">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Upcoming Scheduled Tours</h2>
             {upcomingAssignments.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-xs text-slate-400 bg-slate-900/40">
+              <div className="rounded-[18px] border border-dashed border-white/10 p-12 text-center text-xs text-slate-400 bg-slate-900/40 font-semibold">
                 No upcoming tours scheduled.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {upcomingAssignments.map(asg => (
-                  <div key={asg.id} className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-3">
-                    <span className="text-xs font-black text-white block">{asg.booking.package.name}</span>
-                    <p className="text-2xs text-slate-400">Date: <strong>{new Date(asg.booking.travelDate).toLocaleDateString()}</strong></p>
-                    <p className="text-2xs text-slate-400">Customer: <strong>{asg.booking.user.name}</strong></p>
-                    <p className="text-2xs text-slate-400">Pickup: <strong>{asg.booking.pickupLocation}</strong></p>
+                  <div key={asg.id} className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-3 shadow-sm">
+                    <span className="text-sm font-bold text-white block font-sans">{asg.booking.package.name}</span>
+                    <div className="text-xs text-slate-400 font-semibold space-y-1.5">
+                      <p>Date: <strong className="text-white">{new Date(asg.booking.travelDate).toLocaleDateString()}</strong></p>
+                      <p>Customer: <strong>{asg.booking.user.name}</strong></p>
+                      <p>Pickup Point: <strong className="text-white">{asg.booking.pickupLocation}</strong></p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -786,30 +787,30 @@ export default function TourGuidePortal() {
         {activeTab === 'completed' && (
           <div className="space-y-4 animate-fade-in">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Completed Tours Log</h2>
-            <div className="rounded-2xl border border-white/5 bg-slate-900 overflow-hidden">
+            <div className="rounded-[18px] border border-white/5 bg-slate-900 overflow-hidden shadow-sm">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10 text-slate-400 font-semibold font-mono">
-                    <th className="p-3">Invoice ID</th>
-                    <th className="p-3">Customer Name</th>
-                    <th className="p-3">Destination</th>
-                    <th className="p-3">Completion Date</th>
+                    <th className="p-4">Invoice ID</th>
+                    <th className="p-4">Customer Name</th>
+                    <th className="p-4">Destination</th>
+                    <th className="p-4">Completion Date</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                   {completedAssignments.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="p-4 text-center text-slate-500 italic">
+                      <td colSpan={4} className="p-5 text-center text-slate-500 italic font-semibold">
                         No completed tours logged yet.
                       </td>
                     </tr>
                   ) : (
                     completedAssignments.map(asg => (
-                      <tr key={asg.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/5">
-                        <td className="p-3 font-mono font-bold text-amber-500">{asg.booking.invoiceId}</td>
-                        <td className="p-3">{asg.booking.user.name}</td>
-                        <td className="p-3">{asg.booking.package.name}</td>
-                        <td className="p-3">{new Date(asg.booking.travelDate).toLocaleDateString()}</td>
+                      <tr key={asg.id} className="hover:bg-white/5 transition-colors">
+                        <td className="p-4 font-mono font-bold text-amber-400">INV-{asg.booking.invoiceId}</td>
+                        <td className="p-4 font-semibold">{asg.booking.user.name}</td>
+                        <td className="p-4 font-semibold text-slate-300">{asg.booking.package.name}</td>
+                        <td className="p-4 text-slate-400 font-bold">{new Date(asg.booking.travelDate).toLocaleDateString()}</td>
                       </tr>
                     ))
                   )}
@@ -822,37 +823,37 @@ export default function TourGuidePortal() {
         {/* Tab 6: Earnings */}
         {activeTab === 'earnings' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="rounded-2xl border border-white/5 bg-slate-900 p-6 flex items-center justify-between">
+            <div className="rounded-[18px] border border-white/5 bg-slate-900 p-6 flex items-center justify-between shadow-md">
               <div>
-                <span className="text-3xs font-bold uppercase tracking-wider text-slate-400 font-mono block">Estimated Earnings</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono block">Estimated Earnings</span>
                 <span className="text-2xl font-black text-amber-500">${data.stats.monthlyEarnings}</span>
               </div>
               <Award className="h-10 w-10 text-amber-500" />
             </div>
 
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Tour Earnings Breakdown</h3>
-            <div className="rounded-2xl border border-white/5 bg-slate-900 overflow-hidden">
+            <div className="rounded-[18px] border border-white/5 bg-slate-900 overflow-hidden shadow-sm">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-white/5 border-b border-white/10 text-slate-400 font-semibold font-mono">
-                    <th className="p-3">Invoice</th>
-                    <th className="p-3">Tour Destination</th>
-                    <th className="p-3">Tour Fee</th>
+                    <th className="p-4">Invoice</th>
+                    <th className="p-4">Tour Destination</th>
+                    <th className="p-4">Tour Fee</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                   {data.assignments.filter(a => a.status === 'COMPLETED').length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-4 text-center text-slate-500 italic">
-                        Earnings will start appearing here once your assignments are completed.
+                      <td colSpan={3} className="p-5 text-center text-slate-500 italic font-semibold">
+                        Earnings will start appearing here once assignments are completed.
                       </td>
                     </tr>
                   ) : (
                     data.assignments.filter(a => a.status === 'COMPLETED').map(asg => (
-                      <tr key={asg.id} className="border-b border-white/5 last:border-b-0">
-                        <td className="p-3 font-mono font-bold">{asg.booking.invoiceId}</td>
-                        <td className="p-3">{asg.booking.package.name}</td>
-                        <td className="p-3 text-emerald-500 font-semibold">$500.00</td>
+                      <tr key={asg.id} className="hover:bg-white/5">
+                        <td className="p-4 font-mono font-bold">INV-{asg.booking.invoiceId}</td>
+                        <td className="p-4 font-semibold text-slate-300">{asg.booking.package.name}</td>
+                        <td className="p-4 text-emerald-450 font-bold">$500.00</td>
                       </tr>
                     ))
                   )}
@@ -868,22 +869,22 @@ export default function TourGuidePortal() {
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">Customer Reviews & Ratings</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {ratings.length === 0 ? (
-                <div className="col-span-2 rounded-2xl border border-dashed border-white/10 p-8 text-center text-xs text-slate-400 bg-slate-900/40">
+                <div className="col-span-2 rounded-[18px] border border-dashed border-white/10 p-12 text-center text-xs text-slate-400 bg-slate-900/40 font-semibold">
                   No ratings submitted by travelers yet.
                 </div>
               ) : (
                 ratings.map(asg => (
-                  <div key={asg.id} className="rounded-2xl border border-white/5 bg-slate-900 p-5 space-y-2">
+                  <div key={asg.id} className="rounded-[18px] border border-white/5 bg-slate-900 p-5 space-y-2.5 shadow-sm">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-white">{asg.booking.user.name}</span>
-                      <div className="text-amber-500 font-bold text-2xs flex space-x-0.5">
+                      <span className="font-bold text-white font-sans text-xs sm:text-sm">{asg.booking.user.name}</span>
+                      <div className="text-amber-400 font-bold text-xs flex items-center space-x-0.5">
                         <span>★</span>
                         <span>{asg.rating}</span>
                       </div>
                     </div>
-                    <span className="text-4xs text-amber-500 font-semibold block font-mono uppercase">{asg.booking.package.name}</span>
+                    <span className="text-[10px] text-amber-500 font-bold block font-mono uppercase tracking-wider">{asg.booking.package.name}</span>
                     {asg.feedback && (
-                      <p className="text-xs text-slate-400 italic leading-relaxed">
+                      <p className="text-xs text-slate-400 italic leading-relaxed border-t border-white/5 pt-2">
                         "{asg.feedback}"
                       </p>
                     )}
@@ -897,22 +898,22 @@ export default function TourGuidePortal() {
         {/* Tab 8: Profile */}
         {activeTab === 'profile' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="rounded-2xl border border-white/5 bg-slate-900 p-6 space-y-6">
-              <h2 className="text-md font-bold text-white border-b border-white/5 pb-3">Tour Guide Profile Settings</h2>
+            <div className="rounded-[18px] border border-white/5 bg-slate-900 p-6 space-y-6">
+              <h2 className="text-sm font-bold text-white border-b border-white/5 pb-3 font-sans">Profile Settings</h2>
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center bg-slate-950/40 p-4 rounded-xl border border-white/5">
-                  <div>
-                    <strong className="text-xs font-semibold block text-white">Availability Mode</strong>
-                    <span className="text-3xs text-slate-400">Controls whether you show up for auto-assignment searches</span>
+                  <div className="space-y-0.5">
+                    <strong className="text-xs font-bold block text-white font-sans">Availability Mode</strong>
+                    <span className="text-[10px] text-slate-400 font-semibold">Controls whether you show up for auto-assignment searches</span>
                   </div>
                   <button
                     disabled={toggleLoading}
                     onClick={handleToggleAvailability}
                     className={`flex items-center space-x-2 rounded-xl border px-4 py-2 text-2xs font-bold transition-all shadow ${
                       data.guide.availability
-                        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                        ? 'bg-emerald-500/10 text-emerald-450 border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                     }`}
                   >
                     {data.guide.availability ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
@@ -920,32 +921,32 @@ export default function TourGuidePortal() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
                   <div className="space-y-1.5">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Guide Name</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Guide Name</label>
                     <input
                       type="text"
                       disabled
                       value={data.guide.name}
-                      className="w-full rounded-xl bg-slate-950/80 border border-white/10 px-4 py-2.5 text-xs text-slate-400 focus:outline-none cursor-not-allowed"
+                      className="w-full rounded-xl bg-slate-950/80 border border-white/10 px-4 py-2.5 text-xs text-slate-400 focus:outline-none cursor-not-allowed font-semibold"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Email Address</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Email Address</label>
                     <input
                       type="email"
                       disabled
                       value={data.guide.email}
-                      className="w-full rounded-xl bg-slate-950/80 border border-white/10 px-4 py-2.5 text-xs text-slate-400 focus:outline-none cursor-not-allowed"
+                      className="w-full rounded-xl bg-slate-950/80 border border-white/10 px-4 py-2.5 text-xs text-slate-400 focus:outline-none cursor-not-allowed font-semibold"
                     />
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-1.5">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-slate-400 block font-mono">Specialized Regions</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-mono">Specialized Destinations</label>
                     <input
                       type="text"
                       disabled
                       value={data.guide.specialization}
-                      className="w-full rounded-xl bg-slate-950/80 border border-white/10 px-4 py-2.5 text-xs text-slate-400 focus:outline-none cursor-not-allowed"
+                      className="w-full rounded-xl bg-slate-950/80 border border-white/10 px-4 py-2.5 text-xs text-slate-400 focus:outline-none cursor-not-allowed font-semibold"
                     />
                   </div>
                 </div>
@@ -956,10 +957,10 @@ export default function TourGuidePortal() {
 
       </main>
 
-      {/* 3. MOCK CUSTOMER CHAT DIALOG */}
+      {/* 3. CUSTOMER CHAT DIALOG (Modal Popover) */}
       {activeChat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 p-5 shadow-2xl flex flex-col h-[500px] text-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-slate-900 border border-white/10 p-5 shadow-2xl flex flex-col h-[500px] text-xs text-slate-100 font-sans">
             
             {/* Header */}
             <div className="flex justify-between items-center border-b border-white/5 pb-3.5 mb-3.5">
@@ -968,8 +969,8 @@ export default function TourGuidePortal() {
                   <User className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-white">{activeChat.booking.user.name}</h3>
-                  <span className="text-3xs text-amber-500 font-semibold">Contact: {activeChat.booking.contactNumber}</span>
+                  <h3 className="font-bold text-sm text-white font-sans">{activeChat.booking.user.name}</h3>
+                  <span className="text-[10px] text-amber-400 font-semibold font-mono">Contact: {activeChat.booking.contactNumber}</span>
                 </div>
               </div>
               <button
@@ -981,7 +982,7 @@ export default function TourGuidePortal() {
             </div>
 
             {/* Message List */}
-            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 mb-4">
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 mb-4 font-semibold">
               {(chatMessages[activeChat.id] || []).map((msg, i) => (
                 <div
                   key={i}
@@ -992,13 +993,13 @@ export default function TourGuidePortal() {
                   <div
                     className={`rounded-2xl px-3.5 py-2.5 leading-relaxed ${
                       msg.sender === 'guide'
-                        ? 'bg-amber-500 text-slate-950 font-medium rounded-tr-none'
+                        ? 'bg-amber-500 text-slate-950 font-bold rounded-tr-none'
                         : 'bg-slate-800 text-white rounded-tl-none border border-slate-700/50'
                     }`}
                   >
                     {msg.text}
                   </div>
-                  <span className="text-[9px] text-slate-500 mt-1">{msg.time}</span>
+                  <span className="text-[9px] text-slate-500 mt-1 font-mono">{msg.time}</span>
                 </div>
               ))}
             </div>
@@ -1010,7 +1011,7 @@ export default function TourGuidePortal() {
                 placeholder="Type your message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 rounded-xl bg-slate-950 border border-white/10 px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="flex-1 rounded-xl bg-slate-950 border border-white/10 px-3.5 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-semibold"
               />
               <button
                 type="submit"

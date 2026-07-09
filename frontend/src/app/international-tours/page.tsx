@@ -48,14 +48,14 @@ export default function InternationalToursPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl w-full px-4 py-28 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-950 text-slate-100 min-h-screen">
+    <div className="mx-auto max-w-7xl w-full px-4 py-24 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-50 text-slate-900 min-h-screen font-sans">
       
       {/* Title */}
-      <div className="text-center space-y-2">
-        <span className="text-xs font-bold text-secondary uppercase tracking-widest block">🌍 International Directory</span>
-        <h1 className="text-3xl sm:text-5xl font-black text-white">Global Countries</h1>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-          Explore our handpicked international tour packages. Select a country below to view packages.
+      <div className="text-center space-y-2 max-w-2xl mx-auto">
+        <span className="text-xs font-bold text-amber-500 uppercase tracking-widest block font-sans">🌍 International Directory</span>
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight font-sans">Global Countries</h1>
+        <p className="text-xs sm:text-sm text-slate-500 font-semibold max-w-lg mx-auto">
+          Explore our handpicked international holiday tour packages. Select a country below to view customized itineraries.
         </p>
       </div>
 
@@ -65,19 +65,21 @@ export default function InternationalToursPage() {
           <div
             key={idx}
             onClick={() => handleCardClick(country.name)}
-            className="group relative h-48 rounded-2xl overflow-hidden border border-secondary/20 shadow-lg hover:border-secondary hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            className="group relative h-48 rounded-[18px] overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white p-1"
           >
-            <img
-              src={country.image}
-              alt={country.name}
-              className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
-              <h3 className="text-sm sm:text-base font-extrabold text-white group-hover:text-secondary transition-colors">
-                {country.name}
-              </h3>
+            <div className="relative h-full w-full rounded-2xl overflow-hidden">
+              <img
+                src={country.image}
+                alt={country.name}
+                className="h-full w-full object-cover group-hover:scale-102 transition-transform duration-500"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
+                <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-400 transition-colors font-sans">
+                  {country.name}
+                </h3>
+              </div>
             </div>
           </div>
         ))}

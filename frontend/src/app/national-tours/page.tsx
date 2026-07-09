@@ -57,14 +57,14 @@ export default function NationalToursPage() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl w-full px-4 py-28 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-950 text-slate-100 min-h-screen">
+    <div className="mx-auto max-w-7xl w-full px-4 py-24 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-50 text-slate-900 min-h-screen font-sans">
       
       {/* Title */}
-      <div className="text-center space-y-2">
-        <span className="text-xs font-bold text-secondary uppercase tracking-widest block">🇮🇳 National Directory</span>
-        <h1 className="text-3xl sm:text-5xl font-black text-white">Indian States & Union Territories</h1>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-          Explore all 28 states and 8 Union Territories of India. Select one below to view packages.
+      <div className="text-center space-y-2 max-w-2xl mx-auto">
+        <span className="text-xs font-bold text-amber-500 uppercase tracking-widest block font-sans">🇮🇳 National Directory</span>
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight font-sans">Indian States & Union Territories</h1>
+        <p className="text-xs sm:text-sm text-slate-500 font-semibold max-w-lg mx-auto">
+          Explore luxury domestic holiday tour packages. Select a location below to view customized itineraries.
         </p>
       </div>
 
@@ -74,19 +74,21 @@ export default function NationalToursPage() {
           <div
             key={idx}
             onClick={() => handleCardClick(loc.name)}
-            className="group relative h-48 rounded-2xl overflow-hidden border border-secondary/20 shadow-lg hover:border-secondary hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            className="group relative h-48 rounded-[18px] overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white p-1"
           >
-            <img
-              src={loc.image}
-              alt={loc.name}
-              className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
-              <h3 className="text-sm sm:text-base font-extrabold text-white group-hover:text-secondary transition-colors">
-                {loc.name}
-              </h3>
+            <div className="relative h-full w-full rounded-2xl overflow-hidden">
+              <img
+                src={loc.image}
+                alt={loc.name}
+                className="h-full w-full object-cover group-hover:scale-102 transition-transform duration-500"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
+                <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-400 transition-colors font-sans">
+                  {loc.name}
+                </h3>
+              </div>
             </div>
           </div>
         ))}

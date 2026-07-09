@@ -197,7 +197,6 @@ export default function CountryAttractionsPage() {
   const router = useRouter();
   const { apiUrl } = useApp();
 
-  // Strip parenthetical text (e.g. "Dubai (UAE)" -> "Dubai")
   const decodedId = typeof id === 'string' 
     ? decodeURIComponent(id).split(' ')[0].toLowerCase() 
     : '';
@@ -206,7 +205,6 @@ export default function CountryAttractionsPage() {
 
   const handleCardClick = async (name: string) => {
     try {
-      // Find package by parent country name
       const res = await fetch(`${apiUrl}/api/packages/search?destination=${encodeURIComponent(decodedId)}`);
       const data = await res.json();
       if (res.ok && data.length > 0) {
@@ -222,11 +220,11 @@ export default function CountryAttractionsPage() {
 
   if (attractions.length === 0) {
     return (
-      <div className="mx-auto max-w-md px-4 py-32 text-center bg-slate-950 text-slate-100 min-h-screen">
-        <div className="rounded-2xl bg-rose-950/20 border border-rose-500/30 p-6 space-y-3">
-          <h4 className="font-bold text-white">Location Not Found</h4>
-          <p className="text-xs text-slate-400">No attractions directory found for "{id}"</p>
-          <Link href="/international-tours" className="text-xs text-secondary font-bold hover:underline block mt-3">
+      <div className="mx-auto max-w-md px-4 py-32 text-center bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-center">
+        <div className="rounded-[18px] bg-rose-50 border border-rose-100 p-6 space-y-3 shadow-sm">
+          <h4 className="font-bold text-slate-950 font-sans">Location Not Found</h4>
+          <p className="text-xs text-rose-600 font-semibold">No attractions directory found for "{id}"</p>
+          <Link href="/international-tours" className="text-xs text-amber-500 font-bold hover:underline block mt-3">
             Back to International Tours
           </Link>
         </div>
@@ -234,20 +232,19 @@ export default function CountryAttractionsPage() {
     );
   }
 
-  // Capitalize properly
   const displayTitle = typeof id === 'string' 
     ? decodeURIComponent(id)
     : '';
 
   return (
-    <div className="mx-auto max-w-7xl w-full px-4 py-28 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-950 text-slate-100 min-h-screen">
+    <div className="mx-auto max-w-7xl w-full px-4 py-24 sm:px-6 lg:px-8 space-y-8 animate-fade-in bg-slate-50 text-slate-900 min-h-screen font-sans">
       
       {/* Title block */}
-      <div className="text-center space-y-2">
-        <span className="text-xs font-bold text-secondary uppercase tracking-widest block">🌍 Famous Landmarks</span>
-        <h1 className="text-3xl sm:text-5xl font-black text-white">{displayTitle} Attractions</h1>
-        <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto font-medium">
-          Discover all major tourist attractions in {displayTitle}. Select any landmark to view tour packages.
+      <div className="text-center space-y-2 max-w-2xl mx-auto">
+        <span className="text-xs font-bold text-amber-500 uppercase tracking-widest block font-sans">🌍 Famous Landmarks</span>
+        <h1 className="text-3xl sm:text-4xl font-black text-slate-950 tracking-tight font-sans">{displayTitle} Attractions</h1>
+        <p className="text-xs sm:text-sm text-slate-500 font-semibold max-w-lg mx-auto leading-relaxed">
+          Discover major landmarks in {displayTitle}. Select any tourist attraction to view active escorted package itineraries.
         </p>
       </div>
 
@@ -257,19 +254,21 @@ export default function CountryAttractionsPage() {
           <div
             key={idx}
             onClick={() => handleCardClick(att.name)}
-            className="group relative h-48 rounded-2xl overflow-hidden border border-secondary/20 shadow-lg hover:border-secondary hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+            className="group relative h-48 rounded-[18px] overflow-hidden border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer bg-white p-1"
           >
-            <img
-              src={att.image}
-              alt={att.name}
-              className="h-full w-full object-cover group-hover:scale-103 transition-transform duration-500"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
-              <h3 className="text-sm sm:text-base font-extrabold text-white group-hover:text-secondary transition-colors">
-                {att.name}
-              </h3>
+            <div className="relative h-full w-full rounded-2xl overflow-hidden">
+              <img
+                src={att.image}
+                alt={att.name}
+                className="h-full w-full object-cover group-hover:scale-102 transition-transform duration-500"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 text-center sm:text-left">
+                <h3 className="text-xs sm:text-sm font-bold text-white group-hover:text-amber-400 transition-colors font-sans">
+                  {att.name}
+                </h3>
+              </div>
             </div>
           </div>
         ))}

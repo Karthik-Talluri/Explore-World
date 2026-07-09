@@ -103,14 +103,14 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg overflow-y-auto max-h-[90vh] rounded-2xl bg-card border border-border p-6 shadow-2xl transition-all duration-300 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 text-slate-900 font-sans">
+      <div className="relative w-full max-w-lg overflow-y-auto max-h-[90vh] rounded-[18px] bg-white border border-slate-200 p-6 sm:p-7 shadow-xl transition-all duration-300 animate-fade-in">
         
         {/* Close Button */}
         {!success && (
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
@@ -118,64 +118,64 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
 
         {/* Modal Header */}
         <div className="mb-6 text-center">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center justify-center space-x-2">
-            <CreditCard className="h-6 w-6 text-secondary" />
-            <span className="text-gold-gradient font-bold">Secure Reservation Checkout</span>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950 flex items-center justify-center space-x-2 font-sans">
+            <CreditCard className="h-5.5 w-5.5 text-amber-500" />
+            <span>Secure Checkout</span>
           </h2>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-slate-400 font-semibold mt-1">
             Complete your holiday tour booking transaction securely via encrypted gateway.
           </p>
         </div>
 
         {success ? (
           /* SUCCESS VIEW */
-          <div className="text-center py-8 space-y-4">
+          <div className="text-center py-8 space-y-4 font-sans">
             <div className="flex justify-center">
-              <CheckCircle2 className="h-16 w-16 text-secondary animate-bounce" />
+              <CheckCircle2 className="h-14 w-14 text-emerald-500 animate-bounce" />
             </div>
-            <h3 className="text-xl font-bold text-foreground">Tour Package Reserved!</h3>
-            <p className="text-sm text-muted-foreground px-4">
-              Your transaction of **₹{totalPrice.toLocaleString('en-IN')}** was processed successfully.
+            <h3 className="text-lg font-bold text-slate-950">Tour Package Reserved!</h3>
+            <p className="text-xs text-slate-500 font-semibold px-4 leading-relaxed">
+              Your transaction of <strong className="text-slate-900">₹{totalPrice.toLocaleString('en-IN')}</strong> was processed successfully.
               A booking confirmation has been logged to your account.
             </p>
-            <div className="bg-muted p-3 rounded-xl inline-block border border-secondary/20">
-              <span className="text-xs font-mono text-muted-foreground block uppercase tracking-wide">
-                Invoice Reference
+            <div className="bg-slate-50 p-4 rounded-xl inline-block border border-slate-200">
+              <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
+                Invoice Reference ID
               </span>
-              <span className="text-sm font-mono font-bold text-secondary">{invoiceId}</span>
+              <span className="text-xs font-mono font-bold text-amber-600">{invoiceId}</span>
             </div>
-            <p className="text-xs text-secondary animate-pulse">Redirecting to your Dashboard...</p>
+            <p className="text-xs text-amber-500 font-bold animate-pulse">Redirecting to your Dashboard...</p>
           </div>
         ) : (
           /* RESERVATION FORM */
           <div className="space-y-6">
             
             {/* Booking Summary */}
-            <div className="rounded-xl border border-secondary/20 bg-primary/20 p-4">
-              <span className="text-xs font-bold text-secondary uppercase tracking-wider block mb-1">
-                Tour Package Selected
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 space-y-1">
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest block font-sans">
+                Package Selected
               </span>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-foreground">
+              <div className="flex justify-between items-center text-xs font-bold text-slate-800">
+                <span className="truncate max-w-[240px]">
                   {activeBooking.name} {activeBooking.durationDays ? `(${activeBooking.durationDays} Days)` : ''}
                 </span>
-                <span className="text-sm font-extrabold text-secondary">₹{basePrice.toLocaleString('en-IN')} / traveler</span>
+                <span className="text-amber-600 font-extrabold text-right">₹{basePrice.toLocaleString('en-IN')} / person</span>
               </div>
             </div>
 
             {/* Custom inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 font-semibold text-slate-600">
               
               {/* Travel Date */}
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 flex items-center space-x-1">
-                  <Calendar className="h-3.5 w-3.5 text-secondary" />
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center space-x-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-amber-500 shrink-0" />
                   <span>Travel Date</span>
                 </label>
                 <select
                   value={travelDate}
                   onChange={(e) => setTravelDate(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-xs text-foreground focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500/50 font-semibold"
                 >
                   {activeBooking.availableDates.map((d, i) => (
                     <option key={i} value={d}>
@@ -187,9 +187,9 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
 
               {/* Travelers */}
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 flex items-center space-x-1">
-                  <Users className="h-3.5 w-3.5 text-secondary" />
-                  <span>Number of Travelers</span>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center space-x-1.5">
+                  <Users className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  <span>Travelers Count</span>
                 </label>
                 <input
                   type="number"
@@ -197,20 +197,20 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                   max="10"
                   value={travelersCount}
                   onChange={(e) => setTravelersCount(Number(e.target.value))}
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-xs text-foreground focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500/50 font-semibold"
                 />
               </div>
 
               {/* Room Type */}
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 flex items-center space-x-1">
-                  <Home className="h-3.5 w-3.5 text-secondary" />
-                  <span>Room Type Selection</span>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center space-x-1.5">
+                  <Home className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  <span>Room Selection</span>
                 </label>
                 <select
                   value={roomType}
                   onChange={(e) => setRoomType(e.target.value as any)}
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-xs text-foreground focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500/50 font-semibold"
                 >
                   <option value="Single">Single Room (Standard)</option>
                   <option value="Double">Double Room (+10%)</option>
@@ -218,46 +218,46 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                 </select>
               </div>
 
-              {/* Pickup Location */}
-              <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-                  Pickup Location
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="E.g., Srinagar Airport, Hotel Lobby"
-                  value={pickupLocation}
-                  onChange={(e) => setPickupLocation(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
-                />
-              </div>
-
               {/* Contact Number */}
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-                  Contact Number
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+                  Contact Phone
                 </label>
                 <input
                   type="tel"
                   required
-                  placeholder="E.g., +1-555-0199"
+                  placeholder="+91 98765 43210"
                   value={contactNumber}
                   onChange={(e) => setContactNumber(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-amber-500/50 font-semibold"
+                />
+              </div>
+
+              {/* Pickup Location */}
+              <div className="sm:col-span-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+                  Pickup Point Meeting Location
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="E.g., Airport Arrivals Lobby, Central Railway Station"
+                  value={pickupLocation}
+                  onChange={(e) => setPickupLocation(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500/50 font-semibold"
                 />
               </div>
 
               {/* Requests */}
               <div className="sm:col-span-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-                  Special Requests / Dietary Needs
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">
+                  Special Requests / Dietary Plans
                 </label>
                 <textarea
-                  placeholder="E.g., Vegetarian meals, high floor, anniversary surprise..."
+                  placeholder="E.g., Vegetarian meals, wheelchair access, high floor..."
                   value={specialRequests}
                   onChange={(e) => setSpecialRequests(e.target.value)}
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-xs text-foreground focus:outline-none h-14 resize-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500/50 h-16 resize-none font-semibold"
                 />
               </div>
 
@@ -265,16 +265,16 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
 
             {/* Error Alert */}
             {error && (
-              <div className="flex items-center space-x-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive border border-destructive/20">
+              <div className="flex items-center space-x-2 rounded-xl bg-rose-50 p-3.5 text-xs text-rose-600 border border-rose-100 font-bold">
                 <AlertCircle className="h-5 w-5 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Card Form */}
-            <form onSubmit={handlePayment} className="space-y-4">
+            <form onSubmit={handlePayment} className="space-y-4 font-semibold text-slate-650">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                   Cardholder Name
                 </label>
                 <input
@@ -283,12 +283,12 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value)}
                   placeholder="John Doe"
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-850 focus:outline-none focus:border-amber-500/50 font-semibold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                   Card Number (Use `4000 0000 0000 0002` to simulate decline)
                 </label>
                 <input
@@ -297,13 +297,13 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   placeholder="4000 1234 5678 9010"
-                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-850 focus:outline-none focus:border-amber-500/50 font-semibold"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
                     Expiration Date
                   </label>
                   <input
@@ -312,12 +312,12 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                     value={cardExpiry}
                     onChange={(e) => setCardExpiry(e.target.value)}
                     placeholder="MM/YY"
-                    className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-850 focus:outline-none focus:border-amber-500/50 font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                    CVV
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    CVV Security Code
                   </label>
                   <input
                     type="password"
@@ -326,23 +326,23 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }: CheckoutMo
                     value={cardCvv}
                     onChange={(e) => setCardCvv(e.target.value)}
                     placeholder="•••"
-                    className="w-full rounded-xl border border-input bg-background/50 px-3 py-2.5 text-xs text-foreground focus:outline-none"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-850 focus:outline-none focus:border-amber-500/50 font-semibold"
                   />
                 </div>
               </div>
 
               {/* Price Details & Submit */}
-              <div className="border-t border-border mt-6 pt-4 flex items-center justify-between">
+              <div className="border-t border-slate-200 mt-6 pt-4 flex items-center justify-between">
                 <div>
-                  <span className="text-4xs text-muted-foreground uppercase tracking-wider block">Estimated Total</span>
-                  <span className="text-xl font-extrabold text-foreground">₹{totalPrice.toLocaleString('en-IN')}</span>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-widest block font-bold">Estimated Total</span>
+                  <span className="text-xl font-extrabold text-amber-500">₹{totalPrice.toLocaleString('en-IN')}</span>
                 </div>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-xl bg-gradient-to-r from-secondary to-amber-600 px-6 py-3 text-xs font-bold text-slate-950 shadow-md hover:brightness-110 disabled:opacity-50 transition-all duration-200"
+                  className="rounded-xl bg-slate-950 hover:bg-slate-900 px-6 py-3 text-xs font-bold text-white shadow-sm hover:brightness-110 disabled:opacity-50 transition-all duration-200"
                 >
-                  {loading ? 'Processing...' : 'Complete Reservation'}
+                  {loading ? 'Processing...' : 'Complete Payment'}
                 </button>
               </div>
 
